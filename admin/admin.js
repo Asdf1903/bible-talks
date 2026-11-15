@@ -292,6 +292,8 @@ function isBiblical() {
 }
 
 function showDetails() {
+  const cat = CATEGORIES.find((c) => c.id === study.category);
+  $("sectionName").textContent = cat ? cat.name : "";
   $("titleInput").value = study.title;
   $("subtitleInput").value = study.subtitle;
   $("bookInput").value = study.book;
@@ -305,6 +307,17 @@ function showDetails() {
   $("detailsBackBtn").textContent = study.id ? "‹ Cancel (keep it as it was)" : "‹ Back";
   show("details");
 }
+
+// "Change" sección: vuelve al paso 1. Lo ya escrito se conserva y, al elegir,
+// regresa directo aquí (el Word no se vuelve a pedir).
+$("changeSectionBtn").addEventListener("click", () => {
+  study.title = $("titleInput").value.trim();
+  study.subtitle = $("subtitleInput").value.trim();
+  study.book = $("bookInput").value;
+  study.passage = $("passageInput").value.trim();
+  study.date = $("dateInput").value || study.date;
+  show("category");
+});
 
 // "Back": si es nuevo, regresa al tipo de estudio; si ya existía, a la vista previa
 $("detailsBackBtn").addEventListener("click", () => {

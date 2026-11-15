@@ -47,6 +47,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Historial: copia de cómo estaba un estudio antes de cada cambio.
+    // Se agregan, nunca se cambian ni se borran.
+    match /readings/{readingId}/versions/{versionId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
     // Notas rápidas del panel ("Leave a note"): solo Neil e Isra.
     // Van aparte de las lecturas para que nunca sean públicas.
     match /notes/{readingId} {

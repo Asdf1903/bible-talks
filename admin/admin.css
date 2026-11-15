@@ -529,3 +529,78 @@ body[data-screen="preview"] .desk {
 #screen-done .lead {
   text-align: center;
 }
+
+/* ---------- Inicio: puertas, "Next study goes out" y More ---------- */
+.count {
+  margin-left: 6px;
+  font-weight: 400;
+  opacity: 0.8;
+}
+.next-up {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 24px 0 8px;
+  padding: 16px 20px;
+  border-left: 5px solid var(--accent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.next-label {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+.next-up strong {
+  font-size: 1.2rem;
+}
+.next-title {
+  font-style: italic;
+}
+.more {
+  margin-top: 32px;
+}
+.more summary {
+  display: inline-block;
+  padding: 8px 4px;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  cursor: pointer;
+  list-style: none;
+}
+.more summary::-webkit-details-marker {
+  display: none;
+}
+.more summary::after {
+  content: " ▾";
+}
+.more[open] summary::after {
+  content: " ▴";
+}
+
+/* ---------- Biblioteca y papelera ---------- */
+.study-list li.with-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.study-list li.with-action .study-row {
+  border-bottom: 0;
+  flex: 1;
+}
+.study-list .study-row:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+.big-btn.small {
+  width: auto;
+  min-height: 48px;
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 1rem;
+  flex: none;
+}
+.status.trashed {
+  background: #6b7280;
+  color: #fff;
+}

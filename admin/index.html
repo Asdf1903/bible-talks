@@ -51,14 +51,36 @@
       <button class="big-btn" id="copyUidBtn">Copy the number</button>
     </section>
 
-    <!-- Inicio -->
+    <!-- Inicio: las puertas grandes. Lo demás vive en "More". -->
     <section class="screen" id="screen-home" hidden>
       <h1 id="greeting">Hello</h1>
       <button class="big-btn primary" id="newStudyBtn">📖 Publish a new study</button>
+      <button class="big-btn" data-go="library">🗂️ My library <span class="count" id="libraryCount"></span></button>
 
-      <h2>My studies</h2>
-      <ul class="study-list" id="studyList"></ul>
-      <p class="hint" id="studyListEmpty" hidden>Nothing here yet. Your studies will appear here.</p>
+      <!-- "Next study goes out: …" -->
+      <div class="next-up" id="nextUp" hidden></div>
+
+      <details class="more">
+        <summary>More</summary>
+        <button class="big-btn quiet" data-go="bin">🗑️ The bin <span class="count" id="binCount"></span></button>
+      </details>
+    </section>
+
+    <!-- Mi biblioteca: todos los estudios, en tres grupos -->
+    <section class="screen" id="screen-library" hidden>
+      <h1>My library</h1>
+      <div id="libraryGroups"></div>
+      <p class="hint" id="libraryEmpty" hidden>Nothing here yet. Your studies will appear here.</p>
+      <button class="link-btn back" data-go="home">‹ Back to start</button>
+    </section>
+
+    <!-- La papelera: nada se borra de verdad -->
+    <section class="screen" id="screen-bin" hidden>
+      <h1>The bin</h1>
+      <p class="lead">Studies you moved here. Nothing is lost: you can put any of them back.</p>
+      <ul class="study-list" id="binList"></ul>
+      <p class="hint" id="binEmpty" hidden>The bin is empty.</p>
+      <button class="link-btn back" data-go="home">‹ Back to start</button>
     </section>
 
     <!-- Paso 1: tipo de estudio -->
@@ -71,8 +93,11 @@
 
     <!-- Paso 2: subir Word -->
     <section class="screen" id="screen-file" hidden>
-      <p class="step">Step 2 of 4</p>
-      <h1>Choose your Word document</h1>
+      <p class="step" id="fileStep">Step 2 of 4</p>
+      <h1 id="fileTitle">Choose your Word document</h1>
+      <p class="lead" id="fileReplaceHint" hidden>
+        Choose the corrected version. The old one is kept, just in case.
+      </p>
       <label class="drop-zone" id="dropZone">
         <input type="file" id="fileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
         <span class="drop-icon" aria-hidden="true">📄</span>
@@ -81,7 +106,7 @@
       </label>
       <p class="working" id="fileWorking" hidden>Reading your document…</p>
       <div class="error" id="fileError" hidden></div>
-      <button class="link-btn back" data-go="category">‹ Back</button>
+      <button class="link-btn back" id="fileBackBtn">‹ Back</button>
     </section>
 
     <!-- Paso 3: revisar datos -->
@@ -161,8 +186,10 @@
             <p class="error" id="publishError" hidden></p>
             <button class="big-btn primary" id="publishBtn">✓ Publish</button>
             <button class="big-btn" id="editBtn">✎ Change something</button>
+            <button class="big-btn" id="replaceBtn" hidden>📄 Use a corrected Word file</button>
             <button class="big-btn danger" id="unpublishBtn" hidden>Take it off the website</button>
-            <button class="big-btn quiet" data-go="home">‹ Back to my studies</button>
+            <button class="big-btn quiet" data-go="library">‹ Back to my library</button>
+            <button class="link-btn danger" id="trashBtn" hidden>🗑️ Move to the bin</button>
           </aside>
 
           <!-- Nota rápida: privada (solo Neil e Isra), se guarda sola -->

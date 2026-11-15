@@ -12,7 +12,7 @@ import {
   GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 import {
-  doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, getDocs,
+  doc, getDoc, setDoc, updateDoc, addDoc, collection, query, orderBy, limit, getDocs,
   serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
@@ -42,6 +42,8 @@ const BOOKS = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Josh
 let study = null;
 let user = null;
 let firstName = ""; // "Neil": para que el panel le hable por su nombre
+let fileMode = "new"; // "new" = estudio nuevo; "replace" = Word corregido de un estudio que ya existe
+let allStudies = [];  // todos los estudios (se cargan al entrar a Inicio, Biblioteca o Papelera)
 
 function newStudy() {
   study = { id: null, category: null, title: "", subtitle: "", book: "", passage: "",
@@ -80,7 +82,7 @@ function show(name) {
   document.querySelectorAll(".screen").forEach((s) => { s.hidden = s.id !== "screen-" + name; });
   document.body.dataset.screen = name; // para que el CSS ensanche la vista previa
   window.scrollTo(0, 0);
-  if (name === "home") loadStudies();
+  if (name === "home" || name === "library" || name === "bin") refreshLists(name);
 }
 
 document.querySelectorAll("[data-go]").forEach((b) =>
@@ -147,44 +149,121 @@ onAuthStateChanged(auth, async (u) => {
   show("home");
 });
 
-/* ---------- 3. Inicio: My studies ---------- */
+/* ---------- 3. Inicio, Mi biblioteca y Papelera ---------- */
 
 function statusOf(r) {
   if (r.status === "published") {
     const when = r.publishAt && r.publishAt.toDate ? r.publishAt.toDate() : new Date();
-    return when > new Date() ? { key: "scheduled", label: "Scheduled" } : { key: "published", label: "Published" };
+    return when > new Date() ? { key: "scheduled", label: "Coming up" } : { key: "published", label: "On the website" };
   }
   if (r.status === "trashed") return { key: "trashed", label: "In the bin" };
   return { key: "draft", label: "Draft" };
 }
 
-async function loadStudies() {
-  const list = $("studyList");
-  list.innerHTML = "";
-  let snap;
+function millis(ts) {
+  return ts && ts.toMillis ? ts.toMillis() : 0;
+}
+
+// Trae todos los estudios una vez y pinta la pantalla que se está viendo
+async function refreshLists(screen) {
   try {
-    snap = await getDocs(query(collection(db, "readings"), orderBy("updatedAt", "desc"), limit(30)));
+    const snap = await getDocs(query(collection(db, "readings"), orderBy("updatedAt", "desc"), limit(500)));
+    allStudies = snap.docs.map((d) => ({ id: d.id, data: d.data(), st: statusOf(d.data()) }));
   } catch (e) {
     console.error(e);
     return;
   }
-  const rows = snap.docs.filter((d) => d.data().status !== "trashed");
-  $("studyListEmpty").hidden = rows.length > 0;
-  rows.forEach((d) => {
-    const r = d.data();
-    const st = statusOf(r);
-    const cat = CATEGORIES.find((c) => c.id === r.category);
-    const li = document.createElement("li");
-    const btn = document.createElement("button");
-    btn.innerHTML = "<strong></strong><span class=\"meta\"><span class=\"status\"></span><span class=\"info\"></span></span>";
-    btn.querySelector("strong").textContent = r.title;
-    btn.querySelector(".status").textContent = st.label;
-    btn.querySelector(".status").classList.add(st.key);
-    btn.querySelector(".info").textContent = (cat ? cat.name : "") + " · " + niceDate(tsToIso(r.publishAt));
-    btn.addEventListener("click", () => openStudy(d.id, r));
-    li.appendChild(btn);
-    list.appendChild(li);
+  if (screen === "home") paintHome();
+  if (screen === "library") paintLibrary();
+  if (screen === "bin") paintBin();
+}
+
+// Un renglón de la lista: título + estado + sección y fecha
+function studyRow(item, onClick, extraButton) {
+  const r = item.data;
+  const cat = CATEGORIES.find((c) => c.id === r.category);
+  const li = document.createElement("li");
+  const btn = document.createElement("button");
+  btn.className = "study-row";
+  btn.innerHTML = '<strong></strong><span class="meta"><span class="status"></span><span class="info"></span></span>';
+  btn.querySelector("strong").textContent = r.title;
+  btn.querySelector(".status").textContent = item.st.label;
+  btn.querySelector(".status").classList.add(item.st.key);
+  btn.querySelector(".info").textContent = (cat ? cat.name : "") + " · " + niceDate(tsToIso(r.publishAt));
+  if (onClick) btn.addEventListener("click", onClick); else btn.disabled = true;
+  li.appendChild(btn);
+  if (extraButton) { li.classList.add("with-action"); li.appendChild(extraButton); }
+  return li;
+}
+
+function paintHome() {
+  const live = allStudies.filter((x) => x.st.key !== "trashed");
+  const binned = allStudies.filter((x) => x.st.key === "trashed");
+  $("libraryCount").textContent = live.length ? "(" + live.length + ")" : "";
+  $("binCount").textContent = binned.length ? "(" + binned.length + ")" : "";
+
+  // "Next study goes out": el programado más cercano; si no hay, el último publicado
+  const next = allStudies.filter((x) => x.st.key === "scheduled")
+    .sort((p, q) => millis(p.data.publishAt) - millis(q.data.publishAt))[0];
+  const last = allStudies.filter((x) => x.st.key === "published")
+    .sort((p, q) => millis(q.data.publishAt) - millis(p.data.publishAt))[0];
+  const box = $("nextUp");
+  box.innerHTML = "";
+  const pick = next || last;
+  if (pick) {
+    box.innerHTML = '<span class="next-label"></span><strong></strong><span class="next-title"></span>';
+    box.querySelector(".next-label").textContent = next ? "Next study goes out" : "Nothing is scheduled yet. Last one published";
+    box.querySelector("strong").textContent = niceDate(tsToIso(pick.data.publishAt));
+    box.querySelector(".next-title").textContent = "“" + pick.data.title + "”";
+  }
+  box.hidden = !pick;
+}
+
+function paintLibrary() {
+  const groups = [
+    { key: "scheduled", title: "Coming up", sort: (p, q) => millis(p.data.publishAt) - millis(q.data.publishAt) },
+    { key: "published", title: "On the website", sort: (p, q) => millis(q.data.publishAt) - millis(p.data.publishAt) },
+    { key: "draft", title: "Drafts", sort: (p, q) => millis(q.data.updatedAt) - millis(p.data.updatedAt) }
+  ];
+  const wrap = $("libraryGroups");
+  wrap.innerHTML = "";
+  let total = 0;
+  groups.forEach((g) => {
+    const items = allStudies.filter((x) => x.st.key === g.key).sort(g.sort);
+    if (!items.length) return;
+    total += items.length;
+    const h = document.createElement("h2");
+    h.textContent = g.title + " (" + items.length + ")";
+    const ul = document.createElement("ul");
+    ul.className = "study-list";
+    items.forEach((x) => ul.appendChild(studyRow(x, () => openStudy(x.id, x.data))));
+    wrap.appendChild(h);
+    wrap.appendChild(ul);
   });
+  $("libraryEmpty").hidden = total > 0;
+}
+
+function paintBin() {
+  const items = allStudies.filter((x) => x.st.key === "trashed")
+    .sort((p, q) => millis(q.data.trashedAt) - millis(p.data.trashedAt));
+  const ul = $("binList");
+  ul.innerHTML = "";
+  items.forEach((x) => {
+    const back = document.createElement("button");
+    back.className = "big-btn small";
+    back.textContent = "Put it back";
+    back.addEventListener("click", async () => {
+      back.disabled = true;
+      try {
+        await updateDoc(doc(db, "readings", x.id), {
+          status: "draft", trashedAt: null, updatedAt: serverTimestamp(), updatedBy: user.uid
+        });
+        refreshLists("bin");
+      } catch (e) { console.error(e); back.disabled = false; }
+    });
+    ul.appendChild(studyRow(x, null, back));
+  });
+  $("binEmpty").hidden = items.length > 0;
 }
 
 function openStudy(id, r) {
@@ -214,12 +293,29 @@ CATEGORIES.forEach((c) => {
 
 $("newStudyBtn").addEventListener("click", () => {
   newStudy();
+  setFileMode("new");
   $("fileInput").value = "";
   $("fileError").hidden = true;
   show("category");
 });
 
 // Paso 2: el Word
+// Se usa para estudios nuevos y para "Use a corrected Word file" de uno que ya existe
+function setFileMode(mode) {
+  fileMode = mode;
+  const replacing = mode === "replace";
+  $("fileStep").hidden = replacing;
+  $("fileReplaceHint").hidden = !replacing;
+  $("fileTitle").textContent = replacing ? "Choose the corrected Word document" : "Choose your Word document";
+  $("fileInput").value = "";
+  $("fileError").hidden = true;
+  $("fileWorking").hidden = true;
+}
+
+$("fileBackBtn").addEventListener("click", () => {
+  if (fileMode === "replace") showPreview(); else show("category");
+});
+
 function fileProblem(msg) {
   $("fileWorking").hidden = true;
   $("fileError").innerHTML = msg;
@@ -320,8 +416,14 @@ $("changeSectionBtn").addEventListener("click", () => {
 });
 
 // "Back": si es nuevo, regresa al tipo de estudio; si ya existía, a la vista previa
-$("detailsBackBtn").addEventListener("click", () => {
-  if (study.id) showPreview(); else show("category");
+$("detailsBackBtn").addEventListener("click", async () => {
+  if (!study.id) { show("category"); return; }
+  // Cancelar = olvidar lo que no se guardó (incluido un Word corregido) y volver a como estaba
+  try {
+    const snap = await getDoc(doc(db, "readings", study.id));
+    if (snap.exists()) { openStudy(snap.id, snap.data()); return; }
+  } catch (e) { console.error(e); }
+  showPreview();
 });
 
 $("toPreviewBtn").addEventListener("click", async () => {
@@ -371,6 +473,7 @@ async function saveDraft() {
   if (study.status !== "published") data.publishAt = Timestamp.fromDate(new Date(study.date + "T06:00:00"));
 
   if (study.id) {
+    await keepOldVersion(study.id, data);
     await updateDoc(doc(db, "readings", study.id), data);
   } else {
     const ref = doc(collection(db, "readings"));
@@ -379,6 +482,20 @@ async function saveDraft() {
     await setDoc(ref, data);
     study.id = ref.id;
   }
+}
+
+// Historial: antes de cambiar el texto o el título, guarda una copia de cómo estaba
+// (readings/{id}/versions). Así un error nunca borra el trabajo de Neil.
+async function keepOldVersion(id, next) {
+  const snap = await getDoc(doc(db, "readings", id));
+  if (!snap.exists()) return;
+  const old = snap.data();
+  if (old.bodyHtml === next.bodyHtml && old.title === next.title && old.subtitle === next.subtitle) return;
+  await addDoc(collection(db, "readings", id, "versions"), {
+    title: old.title || "", subtitle: old.subtitle || "", bodyHtml: old.bodyHtml || "",
+    category: old.category || "", sourceName: old.sourceName || "", status: old.status || "",
+    savedAt: serverTimestamp(), savedBy: user.uid
+  });
 }
 
 // Paso 4: vista previa
@@ -406,6 +523,8 @@ function showPreview() {
   $("publishBtn").hidden = published;
   $("publishBtn").textContent = future ? "✓ Publish on " + niceDate(study.date) : "✓ Publish now";
   $("unpublishBtn").hidden = !published;
+  $("replaceBtn").hidden = false;
+  $("trashBtn").hidden = false;
   loadNote();
   show("preview");
 }
@@ -461,6 +580,28 @@ $("noteInput").addEventListener("input", () => {
 $("noteInput").addEventListener("blur", () => { if (noteTimer) saveNote(); });
 
 $("editBtn").addEventListener("click", showDetails);
+
+$("replaceBtn").addEventListener("click", () => {
+  setFileMode("replace");
+  show("file");
+});
+
+$("trashBtn").addEventListener("click", async () => {
+  const onSite = study.status === "published";
+  const msg = "Move “" + study.title + "” to the bin?" +
+    (onSite ? " It will come off the website." : "") + " You can put it back later.";
+  if (!confirm(msg)) return;
+  try {
+    await updateDoc(doc(db, "readings", study.id), {
+      status: "trashed", trashedAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: user.uid
+    });
+    show("library");
+  } catch (e) {
+    console.error(e);
+    $("publishError").textContent = "It couldn’t be moved. Please try again.";
+    $("publishError").hidden = false;
+  }
+});
 
 $("publishBtn").addEventListener("click", async () => {
   const btn = $("publishBtn");

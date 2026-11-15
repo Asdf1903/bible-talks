@@ -29,7 +29,21 @@ function showMissing() {
   document.querySelector(".pager").hidden = true;
 }
 
+// Vista previa del panel (reading.html?preview=1, dentro de un iframe):
+// la lectura no viene de Firestore, la manda el panel tal como está en el editor.
+function previewMode() {
+  window.addEventListener("message", (e) => {
+    if (e.origin !== location.origin || !e.data || e.data.type !== "bt-preview") return;
+    window.BibleReader.start(e.data.reading);
+  }, { once: true });
+  window.parent.postMessage({ type: "bt-preview-ready" }, location.origin);
+}
+
 async function load() {
+  if (new URLSearchParams(location.search).get("preview") && window.parent !== window) {
+    previewMode();
+    return;
+  }
   if (!id) {
     window.BibleReader.start(window.SAMPLE_READING);
     return;
@@ -65,7 +79,7 @@ async function load() {
   if (r.status !== "published" && window.self === window.top) {
     const banner = document.createElement("a");
     banner.className = "preview-banner";
-    banner.href = "admin/#" + encodeURIComponent(snap.id); // el panel abre este estudio
+    banner.href = "admin/#study/" + encodeURIComponent(snap.id); // el panel abre este estudio
     banner.textContent = "Preview · not published yet · ‹ Back to the desk";
     document.body.appendChild(banner);
   }

@@ -8,211 +8,319 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,700;1,7..72,400&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&display=swap">
 
   <link rel="stylesheet" href="../assets/styles.css">
   <link rel="stylesheet" href="admin.css">
 </head>
 <!--
   PANEL DE NEIL (/admin/)
-  Cada <section class="screen"> es una "pantalla". Solo se ve una a la vez;
-  admin.js decide cuál mostrar. Orden del asistente:
-    1. Qué tipo de estudio  →  2. Subir Word  →  3. Revisar datos  →  4. Vista previa → Publish
+  Se organiza como Google Drive / Google Console:
+    - Barra lateral (izquierda): a qué "cuarto" vas (Home, My studies, Bin…).
+    - Arriba de cada cuarto: pestañas y filtros.
+  Cada <section class="view"> es un cuarto. admin.js muestra uno a la vez
+  según la dirección (#home, #studies, #study/abc…), así el botón "atrás"
+  del navegador funciona como en cualquier sitio.
+
+  Publicar un estudio = 2 pasos:
+    1. Subir el Word (ventana "New study")
+    2. Una sola pantalla: datos a la izquierda, vista previa a la derecha → Publish
 -->
 <body class="admin">
 
-  <header class="desk-bar">
-    <span class="desk-name">Bible Talks</span>
-    <span class="env-badge" id="envBadge" hidden>TEST</span>
-    <button class="link-btn" id="signOutBtn" hidden>Sign out</button>
-  </header>
+  <!-- ========== Antes de entrar (sin barra lateral) ========== -->
+  <div class="gate" id="gate">
+    <div class="gate-card" id="gate-loading">
+      <p class="muted">Loading…</p>
+    </div>
 
-  <main class="desk">
-
-    <!-- Cargando -->
-    <section class="screen" id="screen-loading">
-      <p class="hint center">Loading…</p>
-    </section>
-
-    <!-- Iniciar sesión -->
-    <section class="screen" id="screen-signin" hidden>
+    <div class="gate-card" id="gate-signin" hidden>
+      <div class="brand big">Bible Talks</div>
       <h1>Neil’s Desk</h1>
-      <p class="lead">This is where you publish your studies.</p>
-      <button class="big-btn primary" id="signInBtn">Sign in with Google</button>
+      <p class="muted">This is where you publish your studies.</p>
+      <button class="btn primary wide" id="signInBtn">Sign in with Google</button>
       <p class="error" id="signInError" hidden></p>
-    </section>
+    </div>
 
-    <!-- Cuenta sin permiso -->
-    <section class="screen" id="screen-noaccess" hidden>
+    <div class="gate-card" id="gate-noaccess" hidden>
       <h1>This account can’t publish yet</h1>
-      <p class="lead">You are signed in as <strong id="noAccessEmail"></strong>.</p>
+      <p>You are signed in as <strong id="noAccessEmail"></strong>.</p>
       <p>To get access, send this account number to Israel:</p>
       <p class="uid-box" id="uidBox"></p>
-      <button class="big-btn" id="copyUidBtn">Copy the number</button>
-    </section>
+      <button class="btn wide" id="copyUidBtn">Copy the number</button>
+      <button class="link-btn" id="noAccessSignOut">Use another account</button>
+    </div>
+  </div>
 
-    <!-- Inicio: las puertas grandes. Lo demás vive en "More". -->
-    <section class="screen" id="screen-home" hidden>
-      <h1 id="greeting">Hello</h1>
-      <button class="big-btn primary" id="newStudyBtn">📖 Publish a new study</button>
-      <button class="big-btn" data-go="library">🗂️ My library <span class="count" id="libraryCount"></span></button>
+  <!-- ========== El panel ========== -->
+  <div class="app" id="app" hidden>
 
-      <!-- "Next study goes out: …" -->
-      <div class="next-up" id="nextUp" hidden></div>
-
-      <details class="more">
-        <summary>More</summary>
-        <button class="big-btn quiet" data-go="bin">🗑️ The bin <span class="count" id="binCount"></span></button>
-      </details>
-    </section>
-
-    <!-- Mi biblioteca: todos los estudios, en tres grupos -->
-    <section class="screen" id="screen-library" hidden>
-      <h1>My library</h1>
-      <div id="libraryGroups"></div>
-      <p class="hint" id="libraryEmpty" hidden>Nothing here yet. Your studies will appear here.</p>
-      <button class="link-btn back" data-go="home">‹ Back to start</button>
-    </section>
-
-    <!-- La papelera: nada se borra de verdad -->
-    <section class="screen" id="screen-bin" hidden>
-      <h1>The bin</h1>
-      <p class="lead">Studies you moved here. Nothing is lost: you can put any of them back.</p>
-      <ul class="study-list" id="binList"></ul>
-      <p class="hint" id="binEmpty" hidden>The bin is empty.</p>
-      <button class="link-btn back" data-go="home">‹ Back to start</button>
-    </section>
-
-    <!-- Paso 1: tipo de estudio -->
-    <section class="screen" id="screen-category" hidden>
-      <p class="step">Step 1 of 4</p>
-      <h1>What kind of study is this?</h1>
-      <div class="choice-grid" id="categoryChoices"></div>
-      <button class="link-btn back" data-go="home">‹ Back</button>
-    </section>
-
-    <!-- Paso 2: subir Word -->
-    <section class="screen" id="screen-file" hidden>
-      <p class="step" id="fileStep">Step 2 of 4</p>
-      <h1 id="fileTitle">Choose your Word document</h1>
-      <p class="lead" id="fileReplaceHint" hidden>
-        Choose the corrected version. The old one is kept, just in case.
-      </p>
-      <label class="drop-zone" id="dropZone">
-        <input type="file" id="fileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-        <span class="drop-icon" aria-hidden="true">📄</span>
-        <span class="drop-text">Click here to choose the file</span>
-        <span class="hint">or drag it into this box</span>
-      </label>
-      <p class="working" id="fileWorking" hidden>Reading your document…</p>
-      <div class="error" id="fileError" hidden></div>
-      <button class="link-btn back" id="fileBackBtn">‹ Back</button>
-    </section>
-
-    <!-- Paso 3: revisar datos -->
-    <section class="screen" id="screen-details" hidden>
-      <p class="step">Step 3 of 4</p>
-      <h1>Check the details</h1>
-      <div class="notice" id="detailsWarnings" hidden></div>
-
-      <!-- En qué sección del sitio va a quedar (se eligió en el paso 1) -->
-      <div class="section-line">
-        <span>Section: <strong id="sectionName"></strong></span>
-        <button class="link-btn" id="changeSectionBtn">Change</button>
+    <!-- Barra de arriba -->
+    <header class="topbar">
+      <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <a class="brand" href="#home">Bible Talks <span class="brand-sub">Neil’s Desk</span></a>
+      <span class="env-badge" id="envBadge" hidden>TEST</span>
+      <div class="topbar-right">
+        <span class="user-name" id="userName"></span>
+        <button class="link-btn" id="signOutBtn">Sign out</button>
       </div>
+    </header>
 
-      <label class="field">
-        <span>Title</span>
-        <input type="text" id="titleInput" autocomplete="off">
-      </label>
-      <label class="field">
-        <span>Subtitle <em>(optional)</em></span>
-        <input type="text" id="subtitleInput" autocomplete="off">
-      </label>
+    <!-- Barra lateral -->
+    <nav class="sidebar" id="sidebar" aria-label="Main menu">
+      <button class="new-btn" id="newStudyBtn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        New study
+      </button>
 
-      <!-- Solo para Bible Study y Prophecy -->
-      <div id="passageFields" hidden>
-        <label class="field">
-          <span>Book of the Bible</span>
-          <select id="bookInput"></select>
-        </label>
-        <label class="field">
-          <span>Chapter and verses <em>(for example: 3:16-21)</em></span>
-          <input type="text" id="passageInput" autocomplete="off">
-        </label>
+      <a class="nav-item" href="#home" data-nav="home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+        Home
+      </a>
+      <a class="nav-item" href="#studies" data-nav="studies">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a1 1 0 0 1 1-1h5l2 2h7a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/></svg>
+        My studies <span class="nav-count" id="navStudiesCount"></span>
+      </a>
+      <a class="nav-item" href="#bin" data-nav="bin">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
+        Bin <span class="nav-count" id="navBinCount"></span>
+      </a>
+
+      <!-- Todavía no funcionan: se ven, pero no se pueden picar -->
+      <span class="nav-item soon" aria-disabled="true" title="Coming soon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM14 3v5h5"/></svg>
+        Site pages <span class="soon-tag">Soon</span>
+      </span>
+      <span class="nav-item soon" aria-disabled="true" title="Coming soon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3zM3 7l9 6 9-6"/></svg>
+        Messages <span class="soon-tag">Soon</span>
+      </span>
+
+      <div class="nav-bottom">
+        <span class="nav-item soon" aria-disabled="true" title="Coming soon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/></svg>
+          Ask Israel <span class="soon-tag">Soon</span>
+        </span>
       </div>
+    </nav>
+    <div class="scrim" id="scrim" hidden></div>
 
-      <label class="field">
-        <span>Date it goes out</span>
-        <input type="date" id="dateInput">
-      </label>
+    <main class="main" id="main">
 
-      <p class="error" id="detailsError" hidden></p>
-      <button class="big-btn primary" id="toPreviewBtn">See how it looks ›</button>
-      <button class="link-btn back" id="detailsBackBtn">‹ Back</button>
-    </section>
+      <!-- ===== Home ===== -->
+      <section class="view" id="view-home" hidden>
+        <h1 id="greeting">Hello</h1>
 
-    <!-- Paso 4: vista previa -->
-    <!-- Izquierda: la vista previa (tamaño teléfono o computadora).
-         Derecha: el menú que le pregunta a Neil qué hacer. En celular, el menú va abajo. -->
-    <section class="screen" id="screen-preview" hidden>
-      <!-- Cuadrícula de 2 x 2 (en computadora):
-             "Step 4 of 4"   |  See it on: [Phone] [Computer]
-             vista previa    |  menú + nota
-           Así el menú empieza a la misma altura que la vista previa. -->
-      <div class="preview-layout is-phone" id="previewLayout">
-        <p class="step" id="previewStep">Step 4 of 4</p>
-        <div class="size-choice">
-          <span class="size-label" id="sizeLabel">See it on:</span>
-          <div class="size-options" role="group" aria-labelledby="sizeLabel">
-            <button class="size-btn on" data-size="phone" aria-pressed="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>
-              Phone
-            </button>
-            <button class="size-btn" data-size="computer" aria-pressed="false">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>
-              Computer
+        <div class="stat-grid">
+          <a class="stat" href="#studies/published">
+            <span class="stat-num" id="statPublished">0</span>
+            <span class="stat-label"><span class="dot published"></span>On the website</span>
+          </a>
+          <a class="stat" href="#studies/scheduled">
+            <span class="stat-num" id="statScheduled">0</span>
+            <span class="stat-label"><span class="dot scheduled"></span>Coming up</span>
+          </a>
+          <a class="stat" href="#studies/draft">
+            <span class="stat-num" id="statDraft">0</span>
+            <span class="stat-label"><span class="dot draft"></span>Drafts</span>
+          </a>
+        </div>
+
+        <div class="card next-up" id="nextUp" hidden></div>
+
+        <div class="section-head">
+          <h2>Recently edited</h2>
+          <a class="link" href="#studies">See all ›</a>
+        </div>
+        <div class="file-list" id="recentList"></div>
+        <p class="empty" id="recentEmpty" hidden>
+          No studies yet. Click <strong>New study</strong> or drag a Word document here.
+        </p>
+      </section>
+
+      <!-- ===== My studies (como la lista de Drive) ===== -->
+      <section class="view" id="view-studies" hidden>
+        <div class="view-head">
+          <h1>My studies</h1>
+          <label class="search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input type="search" id="searchInput" placeholder="Search by title" aria-label="Search by title">
+          </label>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <a class="tab" href="#studies" data-tab="all">All <span id="tabCountAll"></span></a>
+          <a class="tab" href="#studies/published" data-tab="published">On the website <span id="tabCountPublished"></span></a>
+          <a class="tab" href="#studies/scheduled" data-tab="scheduled">Coming up <span id="tabCountScheduled"></span></a>
+          <a class="tab" href="#studies/draft" data-tab="draft">Drafts <span id="tabCountDraft"></span></a>
+        </div>
+
+        <div class="filters">
+          <label>Section
+            <select id="sectionFilter">
+              <option value="">All sections</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="file-list with-head" id="studiesList"></div>
+        <p class="empty" id="studiesEmpty" hidden></p>
+        <p class="drop-tip">Tip: you can drag a Word document anywhere on this page to start a new study.</p>
+      </section>
+
+      <!-- ===== Bin ===== -->
+      <section class="view" id="view-bin" hidden>
+        <div class="view-head">
+          <h1>Bin</h1>
+        </div>
+        <p class="muted">Studies you moved here. They are not on the website. Nothing is lost: you can put any of them back.</p>
+        <div class="file-list with-head" id="binList"></div>
+        <p class="empty" id="binEmpty" hidden>The bin is empty.</p>
+      </section>
+
+      <!-- ===== Un estudio: datos + vista previa (paso 2 de 2 cuando es nuevo) ===== -->
+      <section class="view" id="view-study" hidden>
+        <div class="editor-head">
+          <div class="editor-title">
+            <a class="crumb" href="#studies">‹ My studies</a>
+            <p class="step" id="editorStep" hidden>New study · Step 2 of 2: check it and publish</p>
+            <h1 id="editorTitle">New study</h1>
+            <div class="editor-status">
+              <span class="chip" id="editorChip"></span>
+              <span class="save-state" id="saveState" aria-live="polite"></span>
+            </div>
+          </div>
+          <div class="editor-actions">
+            <button class="btn" id="saveDraftBtn">Save as draft</button>
+            <button class="btn" id="saveChangesBtn">Save changes</button>
+            <button class="btn primary" id="publishBtn">Publish</button>
+            <button class="icon-btn" id="editorMoreBtn" aria-label="More actions" aria-haspopup="menu">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
             </button>
           </div>
         </div>
-        <div class="preview-box phone" id="previewBox">
-          <iframe id="previewFrame" title="Preview of the study"></iframe>
-        </div>
+        <p class="error" id="editorError" hidden></p>
 
-        <div class="preview-side">
-          <aside class="preview-menu">
-            <p class="menu-question" id="menuQuestion">Do you like how it looks?</p>
-            <p class="menu-hint" id="menuHint">What would you like to do?</p>
-            <p class="error" id="publishError" hidden></p>
-            <button class="big-btn primary" id="publishBtn">✓ Publish</button>
-            <button class="big-btn" id="editBtn">✎ Change something</button>
-            <button class="big-btn" id="replaceBtn" hidden>📄 Use a corrected Word file</button>
-            <button class="big-btn danger" id="unpublishBtn" hidden>Take it off the website</button>
-            <button class="big-btn quiet" data-go="library">‹ Back to my library</button>
-            <button class="link-btn danger" id="trashBtn" hidden>🗑️ Move to the bin</button>
-          </aside>
+        <div class="editor">
+          <!-- Izquierda: datos -->
+          <div class="editor-form">
+            <div class="card">
+              <h2 class="card-title">Word document</h2>
+              <div class="doc-line">
+                <span class="doc-icon" aria-hidden="true">W</span>
+                <div>
+                  <strong id="docName"></strong>
+                  <span class="muted small" id="docWords"></span>
+                </div>
+              </div>
+              <div class="notice" id="docWarnings" hidden></div>
+              <button class="btn small" id="replaceBtn">Use a corrected Word file</button>
+              <input type="file" id="replaceInput" accept=".docx" hidden>
+              <p class="error" id="replaceError" hidden></p>
+            </div>
 
-          <!-- Nota rápida: privada (solo Neil e Isra), se guarda sola -->
-          <div class="note-box">
-            <label for="noteInput" class="note-title">📝 Leave a note</label>
-            <p class="note-hint">Only you and Israel can see it.</p>
-            <textarea id="noteInput" rows="4" placeholder="For example: add the verse from Romans 5"></textarea>
-            <p class="note-status" id="noteStatus" aria-live="polite"></p>
+            <div class="card">
+              <h2 class="card-title">Details</h2>
+              <label class="field">
+                <span>Section</span>
+                <select id="categoryInput"></select>
+                <small class="muted" id="categoryAbout"></small>
+              </label>
+              <label class="field">
+                <span>Title</span>
+                <input type="text" id="titleInput" autocomplete="off">
+              </label>
+              <label class="field">
+                <span>Subtitle <em>(optional)</em></span>
+                <input type="text" id="subtitleInput" autocomplete="off">
+              </label>
+              <div class="field-row" id="passageFields" hidden>
+                <label class="field">
+                  <span>Book of the Bible</span>
+                  <select id="bookInput"></select>
+                </label>
+                <label class="field">
+                  <span>Chapter and verses <em>(e.g. 3:16-21)</em></span>
+                  <input type="text" id="passageInput" autocomplete="off">
+                </label>
+              </div>
+              <label class="field">
+                <span>Date it goes out</span>
+                <input type="date" id="dateInput">
+                <small class="muted">Today = right away. A later date = it appears that morning on its own.</small>
+              </label>
+            </div>
+
+            <!-- Nota privada: solo Neil e Isra -->
+            <div class="card">
+              <label class="card-title" for="noteInput">Note</label>
+              <p class="muted small">Only you and Israel can see it. It saves by itself.</p>
+              <textarea id="noteInput" rows="3" placeholder="For example: add the verse from Romans 5"></textarea>
+              <p class="muted small" id="noteStatus" aria-live="polite"></p>
+              <p class="muted small" id="noteLater" hidden>You can leave a note after you save the study.</p>
+            </div>
+          </div>
+
+          <!-- Derecha: vista previa en vivo -->
+          <div class="editor-preview">
+            <div class="preview-bar">
+              <span class="muted small">Preview: updates as you type</span>
+              <div class="seg" role="group" aria-label="See it on">
+                <button class="seg-btn on" data-size="phone" aria-pressed="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>
+                  Phone
+                </button>
+                <button class="seg-btn" data-size="computer" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>
+                  Computer
+                </button>
+              </div>
+            </div>
+            <div class="preview-box phone" id="previewBox">
+              <iframe id="previewFrame" title="Preview of the study"></iframe>
+            </div>
           </div>
         </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===== Paso 1 de 2: subir el Word ===== -->
+  <dialog class="modal" id="newDialog">
+    <form method="dialog" class="modal-head">
+      <div>
+        <p class="step">New study · Step 1 of 2</p>
+        <h2>Choose your Word document</h2>
       </div>
-    </section>
+      <button class="icon-btn" value="cancel" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </form>
+    <label class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+      <span class="drop-icon" aria-hidden="true">W</span>
+      <span class="drop-text">Click to choose the file</span>
+      <span class="muted small">or drag it into this box</span>
+    </label>
+    <p class="working" id="fileWorking" hidden>Reading your document…</p>
+    <div class="error" id="fileError" hidden></div>
+  </dialog>
 
-    <!-- Listo -->
-    <section class="screen" id="screen-done" hidden>
-      <div class="big-check" aria-hidden="true">✓</div>
-      <h1 id="doneTitle">Published!</h1>
-      <p class="lead" id="doneText"></p>
-      <a class="big-btn primary" id="doneLink" target="_blank" rel="noopener">See it on the site</a>
-      <button class="big-btn" data-go="home">Back to start</button>
-    </section>
+  <!-- Al arrastrar un Word sobre el panel -->
+  <div class="drop-overlay" id="dropOverlay" hidden>
+    <div>
+      <span class="drop-icon" aria-hidden="true">W</span>
+      <p>Drop your Word document to start a new study</p>
+    </div>
+  </div>
 
-  </main>
+  <!-- Menú ⋮ (uno solo, se mueve junto al botón que lo abrió) -->
+  <div class="pop-menu" id="popMenu" role="menu" hidden></div>
+
+  <!-- Avisos cortos abajo ("Saved", "Published") -->
+  <div class="toast" id="toast" role="status" hidden></div>
 
   <!-- Convertir Word a HTML -->
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js"></script>

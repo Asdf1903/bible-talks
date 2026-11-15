@@ -1,0 +1,14 @@
+{
+  "_comment": "Índices que necesita Firestore. Se crean en la consola (Firestore → Indexes) o con el enlace que da el error la primera vez. Hacerlo en los dos proyectos.",
+  "indexes": [
+    {
+      "_usedBy": "Portada (assets/home.js): estudios publicados, del más nuevo al más viejo",
+      "collectionGroup": "readings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "publishAt", "order": "DESCENDING" }
+      ]
+    }
+  ]
+}

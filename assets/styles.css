@@ -6,15 +6,17 @@
    ========================================================= */
 
 :root {
-  --paper: #f7f1e3;        /* fondo tipo hoja de libro */
-  --paper-edge: #ece3cf;   /* fondo detrás del libro en pantallas grandes */
-  --ink: #2a2420;          /* texto principal */
-  --ink-soft: #6b5f55;     /* texto secundario */
-  --accent: #8a2f2a;       /* rojo vino: títulos, botones */
+  --paper: #f5eedf;        /* hoja: pergamino cálido (no blanco) */
+  --paper-edge: #e7dcc4;   /* fondo detrás de la hoja */
+  --ink: #1d2433;          /* texto principal: casi negro con un toque azul */
+  --ink-soft: #5b6072;     /* texto secundario */
+  --accent: #14305a;       /* azul marino: títulos, botones, "BIBLE" del logo */
   --accent-ink: #ffffff;   /* texto sobre botones de acento */
-  --rule: #d9cdb4;         /* líneas finas */
-  --highlight: #f3dc9a;    /* párrafo que se está leyendo en voz alta */
-  --shadow: 0 10px 40px rgba(60, 40, 20, 0.18);
+  --gold: #b8862b;         /* dorado: detalles, "TALKS" del logo */
+  --warm: #b0612a;         /* café-naranja: acento cálido */
+  --rule: #dccfb3;         /* líneas finas */
+  --highlight: #f1dca0;    /* párrafo que se está leyendo en voz alta */
+  --shadow: 0 10px 40px rgba(20, 30, 50, 0.18);
 
   --font-body: "Literata", Georgia, "Times New Roman", serif;
   --font-title: "Cinzel", "Trajan Pro", Georgia, serif;
@@ -24,28 +26,32 @@
 /* Modo nocturno automático (si el celular está en modo oscuro y nadie lo forzó a claro) */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #1c1916;
-    --paper-edge: #121009;
-    --ink: #e9e1d2;
-    --ink-soft: #a89c8c;
-    --accent: #e0a46b;
-    --accent-ink: #1c1916;
-    --rule: #3a332b;
-    --highlight: #4a3b1f;
+    --paper: #131b2c;
+    --paper-edge: #0a0f1a;
+    --ink: #ece4d2;
+    --ink-soft: #a8a291;
+    --accent: #d8ab55;
+    --accent-ink: #131b2c;
+    --gold: #d8ab55;
+    --warm: #e08a4f;
+    --rule: #2b3651;
+    --highlight: #3f3a22;
     --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   }
 }
 
 /* Modo nocturno elegido a mano con el botón */
 :root[data-theme="dark"] {
-  --paper: #1c1916;
-  --paper-edge: #121009;
-  --ink: #e9e1d2;
-  --ink-soft: #a89c8c;
-  --accent: #e0a46b;
-  --accent-ink: #1c1916;
-  --rule: #3a332b;
-  --highlight: #4a3b1f;
+  --paper: #131b2c;
+  --paper-edge: #0a0f1a;
+  --ink: #ece4d2;
+  --ink-soft: #a8a291;
+  --accent: #d8ab55;
+  --accent-ink: #131b2c;
+  --gold: #d8ab55;
+  --warm: #e08a4f;
+  --rule: #2b3651;
+  --highlight: #3f3a22;
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 

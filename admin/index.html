@@ -122,19 +122,31 @@
     </section>
 
     <!-- Paso 4: vista previa -->
+    <!-- Izquierda: la vista previa (tamaño teléfono o computadora).
+         Derecha: el menú que le pregunta a Neil qué hacer. En celular, el menú va abajo. -->
     <section class="screen" id="screen-preview" hidden>
       <p class="step" id="previewStep">Step 4 of 4</p>
-      <h1>This is how readers will see it</h1>
-      <div class="phone">
-        <iframe id="previewFrame" title="Preview of the study"></iframe>
-      </div>
-      <p class="center"><a id="previewFullLink">Open it in a full page</a></p>
+      <div class="preview-layout">
+        <div class="preview-stage">
+          <div class="size-switch" role="group" aria-label="Preview size">
+            <button class="size-btn on" data-size="phone">📱 Phone</button>
+            <button class="size-btn" data-size="computer">🖥️ Computer</button>
+          </div>
+          <div class="preview-box phone" id="previewBox">
+            <iframe id="previewFrame" title="Preview of the study"></iframe>
+          </div>
+        </div>
 
-      <p class="error" id="publishError" hidden></p>
-      <button class="big-btn primary" id="publishBtn">✓ Publish</button>
-      <button class="big-btn" id="editBtn">‹ Change something</button>
-      <button class="link-btn danger" id="unpublishBtn" hidden>Take it off the site</button>
-      <button class="link-btn back" data-go="home">Back to start</button>
+        <aside class="preview-menu">
+          <p class="menu-question" id="menuQuestion">Do you like how it looks?</p>
+          <p class="menu-hint" id="menuHint">What would you like to do?</p>
+          <p class="error" id="publishError" hidden></p>
+          <button class="big-btn primary" id="publishBtn">✓ Publish</button>
+          <button class="big-btn" id="editBtn">✎ Change something</button>
+          <button class="big-btn danger" id="unpublishBtn" hidden>Take it off the website</button>
+          <button class="big-btn quiet" data-go="home">‹ Back to my studies</button>
+        </aside>
+      </div>
     </section>
 
     <!-- Listo -->

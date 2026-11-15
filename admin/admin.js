@@ -41,10 +41,11 @@ const BOOKS = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Josh
 // id: null mientras es nuevo; cuando se guarda el borrador, el id de Firestore.
 let study = null;
 let user = null;
+let firstName = ""; // "Neil": para que el panel le hable por su nombre
 
 function newStudy() {
   study = { id: null, category: null, title: "", subtitle: "", book: "", passage: "",
-            bodyHtml: "", words: 0, sourceName: "", status: "draft", date: todayIso(), warnings: [] };
+            bodyHtml: "", words: 0, sourceName: "", status: "draft", date: todayIso(), publishAt: null, warnings: [] };
 }
 
 /* ---------- Fechas ---------- */
@@ -77,6 +78,7 @@ function publishMoment(iso) {
 
 function show(name) {
   document.querySelectorAll(".screen").forEach((s) => { s.hidden = s.id !== "screen-" + name; });
+  document.body.dataset.screen = name; // para que el CSS ensanche la vista previa
   window.scrollTo(0, 0);
   if (name === "home") loadStudies();
 }
@@ -130,6 +132,7 @@ onAuthStateChanged(auth, async (u) => {
   const hour = new Date().getHours();
   const part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const first = (u.displayName || "").split(" ")[0];
+  firstName = first;
   $("greeting").textContent = part + (first ? ", " + first : "") + " ☀️";
 
   // Si venimos de la vista de página completa (admin/#id), abrir ese estudio directo
@@ -187,7 +190,8 @@ async function loadStudies() {
 function openStudy(id, r) {
   study = { id, category: r.category, title: r.title, subtitle: r.subtitle || "", book: r.book || "",
             passage: r.passage || "", bodyHtml: r.bodyHtml, words: r.words || 0,
-            sourceName: r.sourceName || "", status: r.status, date: tsToIso(r.publishAt), warnings: [] };
+            sourceName: r.sourceName || "", status: r.status, date: tsToIso(r.publishAt),
+            publishAt: r.publishAt || null, warnings: [] };
   showPreview();
 }
 
@@ -297,6 +301,8 @@ function showDetails() {
   $("detailsError").hidden = true;
   $("detailsWarnings").hidden = !study.warnings.length;
   $("detailsWarnings").textContent = study.warnings.join(" ");
+  // Si el estudio ya existía, "regresar" = no guardar los cambios
+  $("detailsBackBtn").textContent = study.id ? "‹ Cancel (keep it as it was)" : "‹ Back";
   show("details");
 }
 
@@ -366,22 +372,41 @@ async function saveDraft() {
 function showPreview() {
   const url = "../reading.html?id=" + encodeURIComponent(study.id);
   $("previewFrame").src = url + "&v=" + Date.now(); // &v= para que no muestre una versión vieja
-  $("previewFullLink").href = url;
   $("publishError").hidden = true;
 
   const published = study.status === "published";
   const future = study.date > todayIso();
-  $("previewStep").hidden = published;
+  const name = firstName ? ", " + firstName : "";
+  const st = statusOf({ status: study.status, publishAt: study.publishAt });
+
+  $("previewStep").hidden = !!study.id && study.status !== "draft";
+  if (!published) {
+    $("menuQuestion").textContent = "Do you like how it looks" + name + "?";
+    $("menuHint").textContent = "What would you like to do?";
+  } else if (st.key === "scheduled") {
+    $("menuQuestion").textContent = "This one goes out on " + niceDate(study.date) + ".";
+    $("menuHint").textContent = "What would you like to do?";
+  } else {
+    $("menuQuestion").textContent = "This one is on the website" + name + ".";
+    $("menuHint").textContent = "What would you like to do?";
+  }
   $("publishBtn").hidden = published;
   $("publishBtn").textContent = future ? "✓ Publish on " + niceDate(study.date) : "✓ Publish now";
   $("unpublishBtn").hidden = !published;
   show("preview");
 }
 
+// 📱 Phone / 🖥️ Computer: cambia el tamaño de la vista previa sin salir del panel
+document.querySelectorAll(".size-btn").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll(".size-btn").forEach((x) => x.classList.toggle("on", x === b));
+  $("previewBox").className = "preview-box " + b.dataset.size;
+}));
+
 $("editBtn").addEventListener("click", showDetails);
 
 $("publishBtn").addEventListener("click", async () => {
   const btn = $("publishBtn");
+  const future0 = study.date > todayIso();
   btn.disabled = true;
   try {
     await updateDoc(doc(db, "readings", study.id), {
@@ -391,6 +416,7 @@ $("publishBtn").addEventListener("click", async () => {
       updatedBy: user.uid
     });
     study.status = "published";
+    study.publishAt = future0 ? Timestamp.fromDate(new Date(study.date + "T06:00:00")) : Timestamp.now();
     const future = study.date > todayIso();
     $("doneTitle").textContent = future ? "All set!" : "Published!";
     $("doneText").textContent = future

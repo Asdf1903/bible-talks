@@ -224,21 +224,105 @@ h2 {
   outline: none;
 }
 
-/* Paso 4: el celular de la vista previa */
-.phone {
-  width: min(100%, 390px);
-  height: min(75vh, 760px);
-  margin: 0 auto 8px;
-  border: 10px solid var(--ink);
-  border-radius: 36px;
+/* Paso 4: vista previa + menú */
+
+/* Esta pantalla necesita más ancho que las demás */
+body[data-screen="preview"] .desk {
+  max-width: 72rem;
+}
+
+.preview-layout {
+  display: grid;
+  gap: 24px;
+}
+/* En computadora: vista previa a la izquierda, menú a la derecha */
+@media (min-width: 900px) {
+  .preview-layout {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    align-items: start;
+  }
+  .preview-menu {
+    position: sticky;
+    top: 24px;
+  }
+}
+
+.preview-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Botones 📱 Phone / 🖥️ Computer */
+.size-switch {
+  display: inline-flex;
+  margin-bottom: 12px;
+  border: 2px solid var(--rule);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.size-btn {
+  min-height: 44px;
+  padding: 6px 18px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.size-btn.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.preview-box {
   overflow: hidden;
   box-shadow: var(--shadow);
+  border: 10px solid var(--ink);
 }
-.phone iframe {
+.preview-box.phone {
+  width: min(100%, 390px);
+  height: min(75vh, 760px);
+  border-radius: 36px;
+}
+.preview-box.computer {
+  width: 100%;
+  height: min(75vh, 760px);
+  border-width: 6px;
+  border-radius: 12px;
+}
+.preview-box iframe {
   width: 100%;
   height: 100%;
   border: 0;
   display: block;
+}
+
+/* El menú que "habla" con Neil */
+.preview-menu {
+  padding: 20px;
+  border: 2px solid var(--rule);
+  border-radius: 16px;
+}
+.menu-question {
+  font-family: var(--font-title);
+  font-size: 1.4rem;
+  line-height: 1.3;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.menu-hint {
+  color: var(--ink-soft);
+  margin: 0 0 12px;
+}
+.big-btn.danger {
+  border-color: #b91c1c;
+  color: #b91c1c;
+}
+.big-btn.quiet {
+  border-color: var(--rule);
+  color: var(--ink-soft);
 }
 
 /* Mensajes */

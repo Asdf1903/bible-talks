@@ -60,10 +60,13 @@ async function load() {
     bodyHtml: r.bodyHtml
   });
 
-  if (r.status !== "published") {
-    const banner = document.createElement("div");
+  // Vista previa de un borrador: aviso que también sirve para regresar al panel.
+  // (Dentro del "celular" del panel no hace falta: ahí ya están los botones.)
+  if (r.status !== "published" && window.self === window.top) {
+    const banner = document.createElement("a");
     banner.className = "preview-banner";
-    banner.textContent = "Preview · not published yet";
+    banner.href = "admin/#" + encodeURIComponent(snap.id); // el panel abre este estudio
+    banner.textContent = "Preview · not published yet · ‹ Back to the desk";
     document.body.appendChild(banner);
   }
 }

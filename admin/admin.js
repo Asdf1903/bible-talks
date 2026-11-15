@@ -131,6 +131,16 @@ onAuthStateChanged(auth, async (u) => {
   const part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const first = (u.displayName || "").split(" ")[0];
   $("greeting").textContent = part + (first ? ", " + first : "") + " ☀️";
+
+  // Si venimos de la vista de página completa (admin/#id), abrir ese estudio directo
+  const fromPreview = decodeURIComponent(location.hash.slice(1));
+  if (fromPreview) {
+    history.replaceState(null, "", location.pathname);
+    try {
+      const snap = await getDoc(doc(db, "readings", fromPreview));
+      if (snap.exists()) { openStudy(snap.id, snap.data()); return; }
+    } catch (e) { console.error(e); }
+  }
   show("home");
 });
 

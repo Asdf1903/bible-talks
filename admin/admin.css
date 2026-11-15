@@ -287,41 +287,46 @@ body[data-screen="preview"] .desk {
   align-self: flex-start;
 }
 
-/* "See how it looks on:"  [A phone] [A computer] */
+/* "See it on:  [Phone] [Computer]" en una sola línea */
 .size-choice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
   max-width: 410px;
-  margin-bottom: 16px;
-  text-align: center;
+  margin-bottom: 12px;
 }
 .size-label {
-  margin: 0 0 8px;
   font-weight: 700;
+  font-size: 1rem;
+  white-space: nowrap;
 }
 .size-options {
   display: grid;
   grid-template-columns: 1fr 1fr; /* los dos del mismo ancho */
-  gap: 10px;
+  gap: 8px;
 }
 .size-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 52px;
-  padding: 8px 12px;
+  gap: 6px;
+  min-width: 8.5rem;
+  min-height: 40px;
+  padding: 4px 12px;
   border: 2px solid var(--rule);
-  border-radius: 12px;
+  border-radius: 10px;
   background: transparent;
   color: var(--ink);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 2px 0 var(--rule); /* sombrita abajo: que se vea "presionable" */
 }
 .size-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   flex: none;
 }
 .size-btn:hover {
@@ -332,6 +337,13 @@ body[data-screen="preview"] .desk {
   background: var(--accent);
   color: var(--accent-ink);
   box-shadow: none;
+}
+/* Pantallas muy angostas: botones un poco más chicos para que quepa todo en una línea */
+@media (max-width: 400px) {
+  .size-btn {
+    min-width: 0;
+    padding: 4px 8px;
+  }
 }
 
 /* Nota rápida debajo del menú */

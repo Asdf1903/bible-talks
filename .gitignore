@@ -1,0 +1,22 @@
+# ============================================================
+# Lo que NUNCA se sube a GitHub (el repo es PÚBLICO).
+# Estos archivos se quedan solo en la compu de Isra.
+# ============================================================
+
+# Textos originales de Neil (PDF/Word de prueba)
+test-files/
+
+# Notas internas del proyecto: traen datos de Neil, su familia y sus cuentas
+CLAUDE.md
+BITACORA.md
+docs/
+bible-talks-auditoria*.md
+
+# Configuración local de Claude Code y de editores
+.claude/
+.vscode/
+
+# Basura del sistema
+Thumbs.db
+desktop.ini
+.DS_Store

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Reading · Bible Talks</title>
+
+  <!-- Letras: Literata (cómoda para leer) y Cinzel (títulos clásicos) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,700;1,7..72,400;1,7..72,700&display=swap">
+
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/reader.css">
+
+  <!-- Aplica el modo nocturno guardado antes de pintar (evita un destello blanco) -->
+  <script>
+    try {
+      var savedTheme = localStorage.getItem("bt-theme");
+      if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+    } catch (e) {}
+  </script>
+</head>
+<body class="reader">
+
+  <!-- 1. Barra superior -->
+  <header class="reader-bar">
+    <a class="back" id="backLink" href="#">‹ <span id="backLabel">Back</span></a>
+    <div class="tools">
+      <button class="tool-btn" id="fontDown" aria-label="Smaller text">A−</button>
+      <button class="tool-btn" id="fontUp" aria-label="Bigger text">A+</button>
+      <button class="tool-btn" id="themeBtn" aria-label="Night mode"></button>
+      <button class="tool-btn listen" id="listenBtn" aria-label="Listen to this reading"></button>
+    </div>
+  </header>
+
+  <!-- 2. Progreso -->
+  <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+  <!-- 3. El libro -->
+  <main class="book">
+    <div class="viewport" id="viewport">
+      <article class="pages" id="pages"></article>
+    </div>
+  </main>
+
+  <!-- 4. Cambiar de página -->
+  <nav class="pager" aria-label="Pages">
+    <button class="page-btn" id="prevBtn" aria-label="Previous page">‹</button>
+    <span class="page-label" id="pageLabel" aria-live="polite"></span>
+    <button class="page-btn" id="nextBtn" aria-label="Next page">›</button>
+  </nav>
+
+  <!-- Por ahora la lectura viene de un archivo de prueba; luego vendrá de Firestore -->
+  <script src="assets/sample-reading.js"></script>
+  <script src="assets/reader.js"></script>
+</body>
+</html>

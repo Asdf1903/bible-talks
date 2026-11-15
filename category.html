@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Good News · Bible Talks</title>
+
+  <!--
+    DEMO TEMPORAL de la página de categoría (el "índice" de una sección).
+    Solo sirve para que Neil vea la idea desde el prototipo de lectura.
+    La versión real leerá las lecturas de Firestore.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,700;1,7..72,400&display=swap">
+  <link rel="stylesheet" href="assets/styles.css">
+
+  <script>
+    try {
+      var savedTheme = localStorage.getItem("bt-theme");
+      if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+    } catch (e) {}
+  </script>
+
+  <style>
+    body {
+      min-height: 100vh;
+      padding: 16px 16px 40px;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* Aviso de demo */
+    .demo-note {
+      margin: 8px 0 28px;
+      padding: 16px 18px;
+      border: 2px dashed var(--accent);
+      border-radius: 14px;
+      font-family: var(--font-ui);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .demo-note strong {
+      color: var(--accent);
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* Encabezado de la sección */
+    .eyebrow {
+      margin: 0 0 6px;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-title);
+      font-size: clamp(32px, 9vw, 48px);
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    .intro {
+      margin: 12px auto 28px;
+      max-width: 34em;
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 18px;
+      line-height: 1.55;
+    }
+
+    /* Lista de lecturas */
+    .list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      display: block;
+      padding: 18px 20px;
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      color: var(--ink);
+      text-decoration: none;
+      background: color-mix(in srgb, var(--paper) 85%, var(--ink) 4%);
+    }
+
+    a.card:hover {
+      border-color: var(--accent);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-family: var(--font-title);
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .card .sub {
+      margin: 6px 0 0;
+      font-style: italic;
+      color: var(--ink-soft);
+      font-size: 16px;
+    }
+
+    .card .meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      color: var(--ink-soft);
+    }
+
+    .tag {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .tag.read {
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .tag.soon {
+      border: 1px solid var(--rule);
+    }
+
+    .card.disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="demo-note">
+      <strong>This is a demo.</strong> This page isn't built yet. <span id="demoText"></span>
+      <br>
+      <a class="back-btn" id="backBtn" href="reading.html">‹ Back to the book</a>
+    </div>
+
+    <p class="eyebrow">Bible Talks</p>
+    <h1 id="title"></h1>
+    <p class="intro" id="intro"></p>
+
+    <ul class="list" id="list"></ul>
+  </div>
+
+  <script>
+    (function () {
+      // Dónde está el libro: en la computadora es reading.html; en el link de
+      // demo (claude.ai) el libro es la página principal ("./").
+      var BOOK = location.protocol === "file:" ? "reading.html" : "./";
+
+      var backBtn = document.getElementById("backBtn");
+      backBtn.href = BOOK;
+      // Si venimos del libro, regresar con "atrás" conserva la página donde iba
+      backBtn.addEventListener("click", function (e) {
+        if (document.referrer && history.length > 1) {
+          e.preventDefault();
+          history.back();
+        }
+      });
+
+      // Secciones del sitio y lo que tendría cada una (texto de ejemplo)
+      var SECTIONS = {
+        "good-news": {
+          name: "Good News",
+          intro: "Stories and experiences from Neil's life that show the way to salvation.",
+          demo: "Here you will find all of Neil's Good News readings, newest first. Tap one to open it as a book."
+        },
+        "doctrine": {
+          name: "Doctrine",
+          intro: "Teachings on living as a Christian.",
+          demo: "Here you will find all of Neil's Doctrine readings."
+        },
+        "bible-study": {
+          name: "Bible Study",
+          intro: "Reflections on the books, chapters and verses of the Bible.",
+          demo: "Here you will find all of Neil's Bible Studies, sorted by book of the Bible."
+        },
+        "prophecy": {
+          name: "Prophecy",
+          intro: "Neil's understanding of Bible prophecy.",
+          demo: "Here you will find all of Neil's readings on prophecy."
+        }
+      };
+
+      // Lecturas de ejemplo (títulos reales de Neil). Solo "God's Heart" se puede abrir.
+      var READINGS = [
+        { title: "God’s Heart", sub: "3 Men · 3 Crosses · 2 Destinies", minutes: 3, href: BOOK },
+        { title: "Found by God", sub: "“I was found of them that sought me not”", minutes: 4 },
+        { title: "God Is Near", sub: "The word is nigh thee, even in thy mouth", minutes: 4 },
+        { title: "Carbon 14 Dating", sub: "Two fatal errors", minutes: 4 },
+        { title: "What Is Man?", sub: "From before creation to the new heaven and earth", minutes: 18 }
+      ];
+
+      var key = new URLSearchParams(location.search).get("c");
+      var section = SECTIONS[key] || SECTIONS["good-news"];
+
+      document.title = section.name + " · Bible Talks";
+      document.getElementById("title").textContent = section.name;
+      document.getElementById("intro").textContent = section.intro;
+      document.getElementById("demoText").textContent = section.demo;
+
+      var list = document.getElementById("list");
+      READINGS.forEach(function (r) {
+        var li = document.createElement("li");
+        var card = document.createElement(r.href ? "a" : "div");
+        card.className = "card" + (r.href ? "" : " disabled");
+        if (r.href) card.href = r.href;
+        else card.setAttribute("aria-disabled", "true");
+
+        card.innerHTML =
+          "<h2></h2><p class='sub'></p>" +
+          "<div class='meta'><span>" + r.minutes + " min read</span>" +
+          (r.href ? "<span class='tag read'>Read now</span>"
+                  : "<span class='tag soon'>Demo: not available yet</span>") +
+          "</div>";
+        card.querySelector("h2").textContent = r.title;
+        card.querySelector(".sub").textContent = r.sub;
+
+        li.appendChild(card);
+        list.appendChild(li);
+      });
+    })();
+  </script>
+</body>
+</html>

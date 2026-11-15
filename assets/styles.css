@@ -73,6 +73,15 @@ a {
   color: var(--accent);
 }
 
+/*
+ * Quita el "zoom con doble toque" del celular en todo el sitio.
+ * Así, picarle rápido a A+ o a las flechas ya no hace zoom.
+ * El zoom con dos dedos (pellizcar) SIGUE funcionando, para quien lo necesite.
+ */
+html {
+  touch-action: manipulation;
+}
+
 button {
   font: inherit;
   color: inherit;

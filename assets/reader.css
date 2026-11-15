@@ -86,8 +86,29 @@ body.reader {
   font-size: 16px;
 }
 
+/* Celulares: el botón de regresar muestra solo la flecha (con borde, como los demás),
+   para que la barra nunca corte palabras como "Good N…" */
+@media (max-width: 430px) {
+  .back {
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    font-size: 22px;
+  }
+  .back #backLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0); /* oculto a la vista, pero lo sigue leyendo el lector de pantalla */
+  }
+}
+
 /* En pantallas muy angostas, el botón de escuchar muestra solo el ícono */
-@media (max-width: 370px) {
+@media (max-width: 340px) {
   .listen-label {
     display: none;
   }
@@ -398,4 +419,9 @@ body.scroll-mode .page-btn {
   margin: 20vh auto 0;
   padding: 0 16px;
   text-align: center;
+}
+
+/* Fecha, autor y minutos: cada dato baja completo si no cabe */
+.title-block .meta span {
+  white-space: nowrap;
 }

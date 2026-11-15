@@ -70,8 +70,9 @@ window.BibleReader = { start: function (reading) {
         (category ? '<p class="eyebrow">' + escapeHtml(category) + "</p>" : "") +
         "<h1>" + escapeHtml(reading.title) + "</h1>" +
         (reading.subtitle ? '<p class="subtitle">' + escapeHtml(reading.subtitle) + "</p>" : "") +
-        '<p class="meta">By ' + escapeHtml(reading.author) + " · " + formatDate(reading.publishedAt) +
-        " · " + minutes + " min read</p>" +
+        // Cada dato en su cajita: si no cabe, baja completo (sin puntos huérfanos)
+        '<p class="meta"><span>By ' + escapeHtml(reading.author) + "</span> <span>· " + formatDate(reading.publishedAt) +
+        "</span> <span>· " + minutes + " min read</span></p>" +
       "</header>" +
       '<div class="body">' + reading.bodyHtml + "</div>" +
       '<footer class="end-card">' +

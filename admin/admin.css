@@ -31,6 +31,20 @@ body.admin {
   }
 }
 
+/* Oscuro elegido a mano con el botón (mismos colores que el automático de arriba) */
+:root[data-theme="dark"] body.admin {
+  --surface: color-mix(in srgb, var(--paper) 92%, #ffffff);
+  --green: #4ade80;
+  --blue: #93c5fd;
+  --red: #f87171;
+  --gray: #9ca3af;
+}
+
+/* Botón de tema: en oscuro se ve el sol (para pasar a claro); en claro, la luna */
+body.admin .icon-moon { display: none; }
+body.admin.is-light .icon-sun { display: none; }
+body.admin.is-light .icon-moon { display: block; }
+
 [hidden] {
   display: none !important;
 }

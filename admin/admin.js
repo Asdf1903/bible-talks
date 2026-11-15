@@ -98,6 +98,34 @@ function toast(text, link) {
   toastTimer = setTimeout(() => { t.hidden = true; }, 6000);
 }
 
+/* ---------- Tema claro / oscuro ---------- */
+// Se guarda en "bt-theme", el mismo que usa el lector: así la vista previa
+// y el sitio público también se ven en el tema que Neil eligió.
+const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+function isDarkNow() {
+  const forced = document.documentElement.dataset.theme;
+  return forced ? forced === "dark" : systemDark.matches;
+}
+
+function paintThemeButton() {
+  const dark = isDarkNow();
+  document.body.classList.toggle("is-light", !dark);
+  const label = dark ? "Switch to light theme" : "Switch to dark theme";
+  $("themeBtn").setAttribute("aria-label", label);
+  $("themeBtn").title = label;
+}
+
+$("themeBtn").addEventListener("click", () => {
+  const next = isDarkNow() ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("bt-theme", next); } catch (e) { /* sin memoria: igual cambia ahora */ }
+  paintThemeButton();
+  if (document.body.dataset.view === "study") refreshPreview(true); // que la vista previa también cambie
+});
+systemDark.addEventListener("change", paintThemeButton);
+paintThemeButton();
+
 /* ---------- 2. Entrar ---------- */
 
 if (ENV === "test") $("envBadge").hidden = false;

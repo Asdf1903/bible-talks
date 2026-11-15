@@ -222,6 +222,10 @@ async function handleFile(file) {
     return fileProblem("This is an older Word file (.doc).<br>Please open it in Word, choose " +
       "<strong>File → Save As</strong>, pick <strong>Word Document (.docx)</strong>, and try again with the new file.");
   }
+  if (name.endsWith(".rtf")) {
+    return fileProblem("This file is saved as Rich Text (.rtf).<br>Please open it in Word, choose " +
+      "<strong>File → Save As</strong>, pick <strong>Word Document (.docx)</strong>, and try again with the new file.");
+  }
   if (name.endsWith(".pdf")) {
     return fileProblem("This is a PDF. Please choose the <strong>Word</strong> version of this study " +
       "(it keeps your bold, italics and underlines).");

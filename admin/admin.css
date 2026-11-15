@@ -282,12 +282,12 @@ body[data-screen="preview"] .desk {
   }
   /* Modo teléfono: teléfono y menú juntitos, los dos centrados */
   .preview-layout.is-phone {
-    grid-template-columns: auto 22rem;
+    grid-template-columns: auto 20rem;
     justify-content: center;
   }
   /* Modo computadora: la vista previa ocupa todo lo que sobra */
   .preview-layout.is-computer {
-    grid-template-columns: minmax(0, 1fr) 22rem;
+    grid-template-columns: minmax(0, 1fr) 20rem;
   }
   .preview-side {
     max-width: none;
@@ -304,13 +304,13 @@ body[data-screen="preview"] .desk {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   max-width: 410px;
 }
 .size-label {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
   white-space: nowrap;
 }
 .size-options {
@@ -323,21 +323,21 @@ body[data-screen="preview"] .desk {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 4px 12px;
+  gap: 4px;
+  min-height: 36px;
+  padding: 2px 8px;
   border: 2px solid var(--rule);
-  border-radius: 10px;
+  border-radius: 9px;
   background: transparent;
   color: var(--ink);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 2px 0 var(--rule); /* sombrita abajo: que se vea "presionable" */
 }
 .size-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex: none;
 }
 .size-btn:hover {

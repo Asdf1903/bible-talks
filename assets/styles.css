@@ -26,32 +26,32 @@
 /* Modo nocturno automático (si el celular está en modo oscuro y nadie lo forzó a claro) */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #131b2c;
-    --paper-edge: #0a0f1a;
-    --ink: #ece4d2;
-    --ink-soft: #a8a291;
-    --accent: #d8ab55;
-    --accent-ink: #131b2c;
-    --gold: #d8ab55;
+    --paper: #1c1916;        /* noche: café muy oscuro (el del prototipo del lector) */
+    --paper-edge: #121009;
+    --ink: #e9e1d2;
+    --ink-soft: #a89c8c;
+    --accent: #e0a46b;
+    --accent-ink: #1c1916;
+    --gold: #d9a95b;
     --warm: #e08a4f;
-    --rule: #2b3651;
-    --highlight: #3f3a22;
+    --rule: #3a332b;
+    --highlight: #4a3b1f;
     --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   }
 }
 
 /* Modo nocturno elegido a mano con el botón */
 :root[data-theme="dark"] {
-  --paper: #131b2c;
-  --paper-edge: #0a0f1a;
-  --ink: #ece4d2;
-  --ink-soft: #a8a291;
-  --accent: #d8ab55;
-  --accent-ink: #131b2c;
-  --gold: #d8ab55;
+  --paper: #1c1916;        /* noche: café muy oscuro (el del prototipo del lector) */
+  --paper-edge: #121009;
+  --ink: #e9e1d2;
+  --ink-soft: #a89c8c;
+  --accent: #e0a46b;
+  --accent-ink: #1c1916;
+  --gold: #d9a95b;
   --warm: #e08a4f;
-  --rule: #2b3651;
-  --highlight: #3f3a22;
+  --rule: #3a332b;
+  --highlight: #4a3b1f;
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 

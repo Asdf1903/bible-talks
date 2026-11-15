@@ -24,9 +24,8 @@
 <!--
   PORTADA (index.html)
   Estructura: fondo con grabados → la hoja (.sheet) → dentro: encabezado,
-  banner, "This week", las 4 secciones, recientes, sobre Neil, pie.
-  Las partes con estudios se llenan solas desde Firestore (assets/home.js).
-  Textos marcados "BORRADOR" = para que Neil los revise.
+  la cinta (banner), las 4 secciones, recientes, "Coming soon", pie.
+  Todo lo de estudios se llena solo desde Firestore (assets/home.js).
 -->
 <body class="site">
   <div class="sheet">
@@ -72,36 +71,17 @@
     </header>
 
     <main>
-      <!-- Banner: foto difuminada + versículo (dentro de la hoja) -->
-      <section class="hero" aria-label="Welcome">
-        <div class="hero-text">
-          <p class="hero-kicker">Welcome to Bible Talks</p>
-          <p class="hero-verse">“All scripture is given by inspiration of God, and is profitable for doctrine,
-            for reproof, for correction, for instruction in righteousness.”</p>
-          <p class="hero-ref">2 Timothy 3:16</p>
-        </div>
+      <!-- La cinta: hasta 4 diapositivas que cambian solas (versículo, recomendado,
+           lo más nuevo, temporada). Las arma assets/home.js; más adelante Neil las
+           elige desde su panel. -->
+      <section class="ribbon" id="ribbon" aria-roledescription="carousel" aria-label="Featured">
+        <div class="ribbon-track" id="ribbonTrack"></div>
+        <button class="ribbon-arrow prev" id="ribbonPrev" aria-label="Previous">‹</button>
+        <button class="ribbon-arrow next" id="ribbonNext" aria-label="Next">›</button>
+        <div class="ribbon-dots" id="ribbonDots"></div>
       </section>
 
-      <!-- Qué es Bible Talks (BORRADOR: Neil lo revisa) -->
-      <section class="block wrap">
-        <h2 class="block-title">What is Bible Talks?</h2>
-        <div class="intro">
-          <p>A place where God’s Word takes center stage. Every week Neil Whatmough shares a new study:
-            stories from his own life, teachings on how to live as a Christian, a close look at the books
-            of the Bible, and what the prophets foretold.</p>
-          <p>Read it here like a book, or press play and listen.</p>
-        </div>
-      </section>
-
-      <!-- El estudio más nuevo -->
-      <section class="block wrap">
-        <h2 class="block-title">This week</h2>
-        <div id="feature">
-          <p class="empty-note">Loading…</p>
-        </div>
-      </section>
-
-      <!-- Las 4 secciones -->
+      <!-- Las 4 secciones: nombre + una línea, para quien llega por primera vez -->
       <section class="block wrap">
         <h2 class="block-title">Explore</h2>
         <div class="sections" id="sections"></div>
@@ -113,21 +93,10 @@
         <div class="recent" id="recent"></div>
       </section>
 
-      <!-- Sobre Neil (BORRADOR) -->
-      <section class="block wrap">
-        <h2 class="block-title">About the author</h2>
-        <div class="about-neil">
-          <img src="assets/img/neil.webp" alt="Neil Whatmough" width="160" height="160">
-          <div>
-            <h3>Neil Whatmough</h3>
-            <p>Neil has spent many years studying the Bible and sharing what he learns.
-              He would love to hear your questions and thoughts.</p>
-            <div class="text-links">
-              <a href="about.html">More about Neil ›</a>
-              <a href="contact.html">Ask a question ›</a>
-            </div>
-          </div>
-        </div>
+      <!-- Lo que Neil ya programó -->
+      <section class="block wrap" id="upcomingBlock" hidden>
+        <h2 class="block-title">Coming soon</h2>
+        <ul class="upcoming" id="upcoming"></ul>
       </section>
     </main>
 

@@ -60,6 +60,16 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Datos del sitio público que arma el panel:
+    // - site/upcoming: títulos y fechas de lo programado ("Coming soon" en la portada).
+    //   (Los estudios programados no se pueden leer todavía; esto es solo la lista.)
+    // - site/home: el banner de la portada (más adelante lo edita Neil).
+    // Todos lo pueden leer; solo Neil e Isra lo cambian.
+    match /site/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Todo lo demás: cerrado
     match /{document=**} {
       allow read, write: if false;

@@ -291,6 +291,26 @@ async function refreshStudies() {
   const binned = allStudies.length - live;
   $("navStudiesCount").textContent = live || "";
   $("navBinCount").textContent = binned || "";
+  publishUpcoming();
+}
+
+// "Coming soon" de la portada: el público no puede leer los estudios programados
+// (las reglas los esconden hasta su fecha), así que el panel deja una lista pública
+// solo con título, sección y fecha en site/upcoming. Se actualiza sola.
+let lastUpcoming = null;
+async function publishUpcoming() {
+  const items = allStudies.filter((x) => x.st.key === "scheduled")
+    .sort((p, q) => millis(p.data.publishAt) - millis(q.data.publishAt))
+    .slice(0, 6)
+    .map((x) => ({ title: x.data.title || "", category: x.data.category || "", date: tsToIso(x.data.publishAt) }));
+  const json = JSON.stringify(items);
+  if (json === lastUpcoming) return;
+  try {
+    await setDoc(doc(db, "site", "upcoming"), { items, updatedAt: serverTimestamp() });
+    lastUpcoming = json;
+  } catch (e) {
+    console.error("site/upcoming:", e); // casi siempre: faltan las reglas nuevas en Firestore
+  }
 }
 
 // Repinta lo que se esté viendo (después de mandar a la papelera, etc.)

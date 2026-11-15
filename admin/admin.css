@@ -1044,3 +1044,12 @@ textarea {
   color: var(--paper);
   font-weight: 700;
 }
+
+/* Celular: "View website" más compacto para que quepa en la barra */
+@media (max-width: 520px) {
+  .topbar .btn.small {
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+  }
+}

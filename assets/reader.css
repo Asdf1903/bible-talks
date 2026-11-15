@@ -368,3 +368,33 @@ body.scroll-mode .page-btn {
     justify-content: center;
   }
 }
+
+/* Versalitas de Word (referencias como "JOHN 1v14") */
+.sc {
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+}
+
+/* Aviso de vista previa (lectura que todavía no se publica) */
+.preview-banner {
+  position: fixed;
+  left: 50%;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #b45309;
+  color: #fff;
+  font: 600 0.85rem/1.3 system-ui, sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+/* Mensaje cuando una lectura no se encuentra */
+.reading-missing {
+  max-width: 28rem;
+  margin: 20vh auto 0;
+  padding: 0 16px;
+  text-align: center;
+}

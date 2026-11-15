@@ -13,6 +13,8 @@
  *   - En cualquier otro lado (tu compu, links de prueba de Vercel)
  *                               → proyecto TEST  (bible-talks-test)
  *   Así una prueba nunca toca las lecturas reales de Neil.
+ *
+ * Es un "módulo": lo importa assets/firebase.js (no se carga solo).
  */
 
 const FIREBASE_CONFIGS = {
@@ -37,5 +39,5 @@ const FIREBASE_CONFIGS = {
 
 const REAL_HOSTS = ["bible-talks.com", "www.bible-talks.com", "bible-talks.vercel.app"];
 
-const FIREBASE_ENV = REAL_HOSTS.includes(location.hostname) ? "real" : "test";
-const firebaseConfig = FIREBASE_CONFIGS[FIREBASE_ENV];
+export const FIREBASE_ENV = REAL_HOSTS.includes(location.hostname) ? "real" : "test";
+export const firebaseConfig = FIREBASE_CONFIGS[FIREBASE_ENV];

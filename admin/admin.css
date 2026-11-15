@@ -1,0 +1,324 @@
+/* =========================================================
+   Panel de Neil: estilos
+   Pensado para un señor de 87 años: letra grande, botones enormes,
+   una sola cosa importante por pantalla. Usa los colores de styles.css.
+   ========================================================= */
+
+body.admin {
+  font-family: var(--font-ui);
+  font-size: 20px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Barra superior */
+.desk-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.desk-name {
+  font-family: var(--font-title);
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+.env-badge {
+  background: #b45309;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+}
+.desk-bar .link-btn {
+  margin-left: auto;
+}
+
+/* Contenido */
+.desk {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+h1 {
+  font-family: var(--font-title);
+  font-size: 1.8rem;
+  line-height: 1.25;
+  margin: 0 0 16px;
+}
+h2 {
+  font-size: 1.2rem;
+  margin: 40px 0 12px;
+  color: var(--ink-soft);
+}
+.lead {
+  font-size: 1.15rem;
+}
+.hint {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+.center {
+  text-align: center;
+}
+.step {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Botones grandes */
+.big-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 68px;
+  margin: 12px 0;
+  padding: 12px 20px;
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.big-btn.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.big-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 8px 0;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.link-btn.back {
+  display: block;
+  margin-top: 20px;
+}
+.link-btn.danger {
+  display: block;
+  margin: 20px auto 0;
+  color: #b91c1c;
+}
+
+/* Paso 1: tipos de estudio */
+.choice-grid {
+  display: grid;
+  gap: 12px;
+}
+.choice {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 16px 20px;
+  border: 2px solid var(--rule);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.choice:hover,
+.choice:focus-visible {
+  border-color: var(--accent);
+}
+.choice strong {
+  display: block;
+  font-size: 1.25rem;
+  color: var(--accent);
+}
+.choice span {
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+
+/* Paso 2: subir archivo */
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 16px;
+  border: 3px dashed var(--accent);
+  border-radius: 16px;
+  text-align: center;
+  cursor: pointer;
+}
+.drop-zone.over {
+  background: var(--highlight);
+}
+.drop-zone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.drop-icon {
+  font-size: 3rem;
+}
+.drop-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.working {
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Paso 3: campos */
+.field {
+  display: block;
+  margin: 0 0 20px;
+}
+.field span {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.field em {
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+.field input,
+.field select {
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 2px solid var(--rule);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+}
+.field select option {
+  background: var(--paper);
+  color: var(--ink);
+}
+.field input:focus,
+.field select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Paso 4: el celular de la vista previa */
+.phone {
+  width: min(100%, 390px);
+  height: min(75vh, 760px);
+  margin: 0 auto 8px;
+  border: 10px solid var(--ink);
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.phone iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* Mensajes */
+.error {
+  color: #b91c1c;
+  font-weight: 700;
+}
+.notice {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--highlight);
+  margin-bottom: 20px;
+}
+.uid-box {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 1rem;
+  padding: 12px;
+  border: 2px dashed var(--rule);
+  border-radius: 10px;
+  word-break: break-all;
+  user-select: all;
+}
+
+/* Lista de estudios */
+.study-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.study-list button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.study-list strong {
+  display: block;
+  font-size: 1.1rem;
+}
+.study-list .meta {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.status {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 6px;
+  margin-right: 6px;
+  background: var(--rule);
+  color: var(--ink);
+}
+.status.published {
+  background: #15803d;
+  color: #fff;
+}
+.status.scheduled {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+/* Pantalla final */
+.big-check {
+  width: 96px;
+  height: 96px;
+  margin: 16px auto;
+  border-radius: 50%;
+  background: #15803d;
+  color: #fff;
+  font-size: 3.5rem;
+  line-height: 96px;
+  text-align: center;
+}
+#screen-done h1,
+#screen-done .lead {
+  text-align: center;
+}

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Neil's Desk · Bible Talks</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,700;1,7..72,400&display=swap">
+
+  <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<!--
+  PANEL DE NEIL (/admin/)
+  Cada <section class="screen"> es una "pantalla". Solo se ve una a la vez;
+  admin.js decide cuál mostrar. Orden del asistente:
+    1. Qué tipo de estudio  →  2. Subir Word  →  3. Revisar datos  →  4. Vista previa → Publish
+-->
+<body class="admin">
+
+  <header class="desk-bar">
+    <span class="desk-name">Bible Talks</span>
+    <span class="env-badge" id="envBadge" hidden>TEST</span>
+    <button class="link-btn" id="signOutBtn" hidden>Sign out</button>
+  </header>
+
+  <main class="desk">
+
+    <!-- Cargando -->
+    <section class="screen" id="screen-loading">
+      <p class="hint center">Loading…</p>
+    </section>
+
+    <!-- Iniciar sesión -->
+    <section class="screen" id="screen-signin" hidden>
+      <h1>Neil’s Desk</h1>
+      <p class="lead">This is where you publish your studies.</p>
+      <button class="big-btn primary" id="signInBtn">Sign in with Google</button>
+      <p class="error" id="signInError" hidden></p>
+    </section>
+
+    <!-- Cuenta sin permiso -->
+    <section class="screen" id="screen-noaccess" hidden>
+      <h1>This account can’t publish yet</h1>
+      <p class="lead">You are signed in as <strong id="noAccessEmail"></strong>.</p>
+      <p>To get access, send this account number to Israel:</p>
+      <p class="uid-box" id="uidBox"></p>
+      <button class="big-btn" id="copyUidBtn">Copy the number</button>
+    </section>
+
+    <!-- Inicio -->
+    <section class="screen" id="screen-home" hidden>
+      <h1 id="greeting">Hello</h1>
+      <button class="big-btn primary" id="newStudyBtn">📖 Publish a new study</button>
+
+      <h2>My studies</h2>
+      <ul class="study-list" id="studyList"></ul>
+      <p class="hint" id="studyListEmpty" hidden>Nothing here yet. Your studies will appear here.</p>
+    </section>
+
+    <!-- Paso 1: tipo de estudio -->
+    <section class="screen" id="screen-category" hidden>
+      <p class="step">Step 1 of 4</p>
+      <h1>What kind of study is this?</h1>
+      <div class="choice-grid" id="categoryChoices"></div>
+      <button class="link-btn back" data-go="home">‹ Back</button>
+    </section>
+
+    <!-- Paso 2: subir Word -->
+    <section class="screen" id="screen-file" hidden>
+      <p class="step">Step 2 of 4</p>
+      <h1>Choose your Word document</h1>
+      <label class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        <span class="drop-icon" aria-hidden="true">📄</span>
+        <span class="drop-text">Click here to choose the file</span>
+        <span class="hint">or drag it into this box</span>
+      </label>
+      <p class="working" id="fileWorking" hidden>Reading your document…</p>
+      <div class="error" id="fileError" hidden></div>
+      <button class="link-btn back" data-go="category">‹ Back</button>
+    </section>
+
+    <!-- Paso 3: revisar datos -->
+    <section class="screen" id="screen-details" hidden>
+      <p class="step">Step 3 of 4</p>
+      <h1>Check the details</h1>
+      <div class="notice" id="detailsWarnings" hidden></div>
+
+      <label class="field">
+        <span>Title</span>
+        <input type="text" id="titleInput" autocomplete="off">
+      </label>
+      <label class="field">
+        <span>Subtitle <em>(optional)</em></span>
+        <input type="text" id="subtitleInput" autocomplete="off">
+      </label>
+
+      <!-- Solo para Bible Study y Prophecy -->
+      <div id="passageFields" hidden>
+        <label class="field">
+          <span>Book of the Bible</span>
+          <select id="bookInput"></select>
+        </label>
+        <label class="field">
+          <span>Chapter and verses <em>(for example: 3:16-21)</em></span>
+          <input type="text" id="passageInput" autocomplete="off">
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Date it goes out</span>
+        <input type="date" id="dateInput">
+      </label>
+
+      <p class="error" id="detailsError" hidden></p>
+      <button class="big-btn primary" id="toPreviewBtn">See how it looks ›</button>
+      <button class="link-btn back" id="detailsBackBtn">‹ Back</button>
+    </section>
+
+    <!-- Paso 4: vista previa -->
+    <section class="screen" id="screen-preview" hidden>
+      <p class="step" id="previewStep">Step 4 of 4</p>
+      <h1>This is how readers will see it</h1>
+      <div class="phone">
+        <iframe id="previewFrame" title="Preview of the study"></iframe>
+      </div>
+      <p class="center"><a id="previewFullLink" target="_blank" rel="noopener">Open it in a full page</a></p>
+
+      <p class="error" id="publishError" hidden></p>
+      <button class="big-btn primary" id="publishBtn">✓ Publish</button>
+      <button class="big-btn" id="editBtn">‹ Change something</button>
+      <button class="link-btn danger" id="unpublishBtn" hidden>Take it off the site</button>
+      <button class="link-btn back" data-go="home">Back to start</button>
+    </section>
+
+    <!-- Listo -->
+    <section class="screen" id="screen-done" hidden>
+      <div class="big-check" aria-hidden="true">✓</div>
+      <h1 id="doneTitle">Published!</h1>
+      <p class="lead" id="doneText"></p>
+      <a class="big-btn primary" id="doneLink" target="_blank" rel="noopener">See it on the site</a>
+      <button class="big-btn" data-go="home">Back to start</button>
+    </section>
+
+  </main>
+
+  <!-- Convertir Word a HTML -->
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js"></script>
+  <script src="../assets/word-to-reading.js"></script>
+  <!-- La lógica del panel -->
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

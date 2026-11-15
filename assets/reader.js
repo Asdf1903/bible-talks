@@ -10,10 +10,9 @@
      7. Recordar dónde se quedó el lector
    Sin librerías: JavaScript normal.
    ========================================================= */
-(function () {
+// reading-loader.js llama a BibleReader.start(lectura) cuando ya tiene la lectura
+window.BibleReader = { start: function (reading) {
   "use strict";
-
-  var reading = window.SAMPLE_READING;
 
   var CATEGORIES = {
     "good-news": "Good News",
@@ -461,4 +460,4 @@
   window.addEventListener("resize", onResize);
   window.addEventListener("load", function () { layout(firstBlockInView()); });
   if (window.ResizeObserver) new ResizeObserver(onResize).observe(viewport);
-})();
+} };

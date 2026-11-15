@@ -1,0 +1,55 @@
+// =========================================================
+// Reglas de seguridad de Firestore: Bible Talks
+// Quién puede leer y escribir cada cosa. Es "la llave" del sitio.
+//
+// Cómo se sube: consola de Firebase → Firestore Database → pestaña Rules →
+// borrar lo que hay, pegar TODO este archivo → Publish.
+// (Subirlo igual en los dos proyectos: bible-talks-ee75e y bible-talks-test.)
+//
+// Quién es "admin": cada persona que puede publicar tiene un documento en la
+// colección `admins` cuyo nombre es su número de cuenta (UID). Esos documentos
+// se crean A MANO en la consola; nadie los puede crear desde el sitio.
+// Así no aparecen correos en este archivo (el repo es público).
+// =========================================================
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Lista de admins: cada quien puede ver solo SU propio documento
+    // (así el panel sabe si te deja entrar). Nadie escribe desde el sitio.
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Lecturas
+    // - Público: solo las publicadas cuya fecha ya llegó.
+    // - Neil e Isra: todo (borradores, programadas, papelera).
+    match /readings/{readingId} {
+      allow read: if isAdmin() ||
+        (resource.data.status == "published" && resource.data.publishAt <= request.time);
+      allow create, update: if isAdmin() &&
+        request.resource.data.status in ["draft", "scheduled", "published", "trashed"] &&
+        request.resource.data.category in ["good-news", "doctrine", "bible-study", "prophecy"] &&
+        request.resource.data.title is string &&
+        request.resource.data.bodyHtml is string;
+      // Nada se borra de verdad: se manda a la papelera (status "trashed")
+      allow delete: if false;
+    }
+
+    // Todo lo demás: cerrado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

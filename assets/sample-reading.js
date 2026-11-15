@@ -13,7 +13,7 @@ window.SAMPLE_READING = {
   subtitle: "3 Men · 3 Crosses · 2 Destinies",
   author: "Neil Whatmough",
   publishedAt: "2026-11-07",
-  pdfUrl: "test-files/GOD's HEART short txt.pdf",
+  pdfUrl: null, // el PDF de prueba no se sube al repo
   bodyHtml: `
 <p>God’s heart was revealed towards all men at the cross. Why did God send His Son, Originator of life, Creator of heaven and earth, into the world to be crucified: publicly shamed in unimaginable pain. Pilate, the Roman governor, declared twice, <strong><em>“I find no fault in Him”</em></strong> before yielding to the mob, incited by religious leaders, “<strong><em>I find no fault in him, take ye Him and crucify him.</em></strong>” Many falsely accused nevertheless have faults, but Jesus had “<strong><em>no fault</em></strong>”. Jesus was crucified between two wicked men, who from their crosses joined soldiers, mob and religious leaders in mocking Him: “Save thyself, if thou be the Son of God. Come down from the cross.” “He saved others, himself he cannot save. If he be the king of Israel, let him come down and we will believe him.” “He trusted in God; let him deliver him, if he will have him, for he said, I am the son of God.” To these insults Jesus replied, “<strong><em>Father forgive them, for they know not what they do.</em></strong>”</p>
 

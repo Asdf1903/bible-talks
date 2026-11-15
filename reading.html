@@ -51,8 +51,10 @@
     <button class="page-btn" id="nextBtn" aria-label="Next page">›</button>
   </nav>
 
-  <!-- Por ahora la lectura viene de un archivo de prueba; luego vendrá de Firestore -->
+  <!-- El lector, y luego quién decide qué lectura mostrar:
+       con ?id=... viene de Firestore; sin id, la lectura de prueba. -->
   <script src="assets/sample-reading.js"></script>
   <script src="assets/reader.js"></script>
+  <script type="module" src="assets/reading-loader.js"></script>
 </body>
 </html>

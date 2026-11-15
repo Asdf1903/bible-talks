@@ -126,26 +126,45 @@
          Derecha: el menú que le pregunta a Neil qué hacer. En celular, el menú va abajo. -->
     <section class="screen" id="screen-preview" hidden>
       <p class="step" id="previewStep">Step 4 of 4</p>
-      <div class="preview-layout">
+      <div class="preview-layout is-phone" id="previewLayout">
         <div class="preview-stage">
-          <div class="size-switch" role="group" aria-label="Preview size">
-            <button class="size-btn on" data-size="phone">📱 Phone</button>
-            <button class="size-btn" data-size="computer">🖥️ Computer</button>
+          <div class="size-choice">
+            <p class="size-label" id="sizeLabel">See how it looks on:</p>
+            <div class="size-options" role="group" aria-labelledby="sizeLabel">
+              <button class="size-btn on" data-size="phone" aria-pressed="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>
+                A phone
+              </button>
+              <button class="size-btn" data-size="computer" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>
+                A computer
+              </button>
+            </div>
           </div>
           <div class="preview-box phone" id="previewBox">
             <iframe id="previewFrame" title="Preview of the study"></iframe>
           </div>
         </div>
 
-        <aside class="preview-menu">
-          <p class="menu-question" id="menuQuestion">Do you like how it looks?</p>
-          <p class="menu-hint" id="menuHint">What would you like to do?</p>
-          <p class="error" id="publishError" hidden></p>
-          <button class="big-btn primary" id="publishBtn">✓ Publish</button>
-          <button class="big-btn" id="editBtn">✎ Change something</button>
-          <button class="big-btn danger" id="unpublishBtn" hidden>Take it off the website</button>
-          <button class="big-btn quiet" data-go="home">‹ Back to my studies</button>
-        </aside>
+        <div class="preview-side">
+          <aside class="preview-menu">
+            <p class="menu-question" id="menuQuestion">Do you like how it looks?</p>
+            <p class="menu-hint" id="menuHint">What would you like to do?</p>
+            <p class="error" id="publishError" hidden></p>
+            <button class="big-btn primary" id="publishBtn">✓ Publish</button>
+            <button class="big-btn" id="editBtn">✎ Change something</button>
+            <button class="big-btn danger" id="unpublishBtn" hidden>Take it off the website</button>
+            <button class="big-btn quiet" data-go="home">‹ Back to my studies</button>
+          </aside>
+
+          <!-- Nota rápida: privada (solo Neil e Isra), se guarda sola -->
+          <div class="note-box">
+            <label for="noteInput" class="note-title">📝 Leave a note</label>
+            <p class="note-hint">Only you and Israel can see it.</p>
+            <textarea id="noteInput" rows="4" placeholder="For example: add the verse from Romans 5"></textarea>
+            <p class="note-status" id="noteStatus" aria-live="polite"></p>
+          </div>
+        </div>
       </div>
     </section>
 

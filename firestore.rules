@@ -47,6 +47,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Notas rápidas del panel ("Leave a note"): solo Neil e Isra.
+    // Van aparte de las lecturas para que nunca sean públicas.
+    match /notes/{readingId} {
+      allow read, write: if isAdmin();
+    }
+
     // Todo lo demás: cerrado
     match /{document=**} {
       allow read, write: if false;

@@ -393,14 +393,59 @@ function showPreview() {
   $("publishBtn").hidden = published;
   $("publishBtn").textContent = future ? "✓ Publish on " + niceDate(study.date) : "✓ Publish now";
   $("unpublishBtn").hidden = !published;
+  loadNote();
   show("preview");
 }
 
-// 📱 Phone / 🖥️ Computer: cambia el tamaño de la vista previa sin salir del panel
+// "See how it looks on: A phone / A computer": cambia el tamaño sin salir del panel
 document.querySelectorAll(".size-btn").forEach((b) => b.addEventListener("click", () => {
-  document.querySelectorAll(".size-btn").forEach((x) => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".size-btn").forEach((x) => {
+    x.classList.toggle("on", x === b);
+    x.setAttribute("aria-pressed", String(x === b));
+  });
   $("previewBox").className = "preview-box " + b.dataset.size;
+  $("previewLayout").className = "preview-layout is-" + b.dataset.size;
 }));
+
+/* ---------- Nota rápida ---------- */
+// Va en la colección `notes` (no dentro del estudio), porque las reglas de Firestore
+// no pueden esconder un solo campo: si estuviera en el estudio publicado, sería pública.
+
+let noteTimer = null;
+let noteFor = null; // de qué estudio es la nota que se está escribiendo
+
+async function loadNote() {
+  noteFor = study.id;
+  $("noteInput").value = "";
+  $("noteStatus").textContent = "";
+  try {
+    const snap = await getDoc(doc(db, "notes", study.id));
+    if (snap.exists()) $("noteInput").value = snap.data().text || "";
+  } catch (e) { console.error(e); }
+}
+
+async function saveNote() {
+  clearTimeout(noteTimer);
+  noteTimer = null;
+  if (!noteFor) return;
+  try {
+    await setDoc(doc(db, "notes", noteFor), {
+      text: $("noteInput").value, updatedAt: serverTimestamp(), updatedBy: user.uid
+    });
+    $("noteStatus").textContent = "Saved ✓";
+  } catch (e) {
+    console.error(e);
+    $("noteStatus").textContent = "The note couldn’t be saved. Please try again.";
+  }
+}
+
+// Se guarda solo, un segundo después de que deja de escribir
+$("noteInput").addEventListener("input", () => {
+  $("noteStatus").textContent = "Saving…";
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(saveNote, 1000);
+});
+$("noteInput").addEventListener("blur", () => { if (noteTimer) saveNote(); });
 
 $("editBtn").addEventListener("click", showDetails);
 

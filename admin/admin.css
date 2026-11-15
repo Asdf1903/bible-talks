@@ -237,11 +237,18 @@ body[data-screen="preview"] .desk {
 }
 /* En computadora: vista previa a la izquierda, menú a la derecha */
 @media (min-width: 900px) {
-  .preview-layout {
+  /* Modo teléfono: teléfono y menú juntitos, los dos centrados */
+  .preview-layout.is-phone {
+    grid-template-columns: auto 20rem;
+    justify-content: center;
+    align-items: start;
+  }
+  /* Modo computadora: la vista previa ocupa todo lo que sobra */
+  .preview-layout.is-computer {
     grid-template-columns: minmax(0, 1fr) 20rem;
     align-items: start;
   }
-  .preview-menu {
+  .preview-side {
     position: sticky;
     top: 24px;
   }
@@ -252,28 +259,94 @@ body[data-screen="preview"] .desk {
   flex-direction: column;
   align-items: center;
 }
+.preview-layout.is-phone .preview-stage {
+  width: min(100%, 390px);
+}
 
-/* Botones 📱 Phone / 🖥️ Computer */
-.size-switch {
-  display: inline-flex;
-  margin-bottom: 12px;
-  border: 2px solid var(--rule);
-  border-radius: 999px;
-  overflow: hidden;
+/* "See how it looks on:"  [A phone] [A computer] */
+.size-choice {
+  width: 100%;
+  max-width: 390px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.size-label {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+.size-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* los dos del mismo ancho */
+  gap: 10px;
 }
 .size-btn {
-  min-height: 44px;
-  padding: 6px 18px;
-  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 2px solid var(--rule);
+  border-radius: 12px;
   background: transparent;
-  color: var(--ink-soft);
+  color: var(--ink);
   font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 2px 0 var(--rule); /* sombrita abajo: que se vea "presionable" */
+}
+.size-btn svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+.size-btn:hover {
+  border-color: var(--accent);
 }
 .size-btn.on {
+  border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-ink);
+  box-shadow: none;
+}
+
+/* Nota rápida debajo del menú */
+.note-box {
+  margin-top: 16px;
+  padding: 20px;
+  border: 2px solid var(--rule);
+  border-radius: 16px;
+}
+.note-title {
+  display: block;
   font-weight: 700;
+  font-size: 1.1rem;
+}
+.note-hint {
+  margin: 2px 0 10px;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+.note-box textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--rule);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  resize: vertical;
+}
+.note-box textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+.note-status {
+  min-height: 1.4em;
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
 }
 
 .preview-box {

@@ -131,25 +131,27 @@
     <!-- Izquierda: la vista previa (tamaño teléfono o computadora).
          Derecha: el menú que le pregunta a Neil qué hacer. En celular, el menú va abajo. -->
     <section class="screen" id="screen-preview" hidden>
+      <!-- Cuadrícula de 2 x 2 (en computadora):
+             "Step 4 of 4"   |  See it on: [Phone] [Computer]
+             vista previa    |  menú + nota
+           Así el menú empieza a la misma altura que la vista previa. -->
       <div class="preview-layout is-phone" id="previewLayout">
-        <div class="preview-stage">
-          <p class="step" id="previewStep">Step 4 of 4</p>
-          <div class="size-choice">
-            <span class="size-label" id="sizeLabel">See it on:</span>
-            <div class="size-options" role="group" aria-labelledby="sizeLabel">
-              <button class="size-btn on" data-size="phone" aria-pressed="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>
-                Phone
-              </button>
-              <button class="size-btn" data-size="computer" aria-pressed="false">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>
-                Computer
-              </button>
-            </div>
+        <p class="step" id="previewStep">Step 4 of 4</p>
+        <div class="size-choice">
+          <span class="size-label" id="sizeLabel">See it on:</span>
+          <div class="size-options" role="group" aria-labelledby="sizeLabel">
+            <button class="size-btn on" data-size="phone" aria-pressed="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>
+              Phone
+            </button>
+            <button class="size-btn" data-size="computer" aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>
+              Computer
+            </button>
           </div>
-          <div class="preview-box phone" id="previewBox">
-            <iframe id="previewFrame" title="Preview of the study"></iframe>
-          </div>
+        </div>
+        <div class="preview-box phone" id="previewBox">
+          <iframe id="previewFrame" title="Preview of the study"></iframe>
         </div>
 
         <div class="preview-side">

@@ -254,37 +254,49 @@ body[data-screen="preview"] .desk {
 
 .preview-layout {
   display: grid;
-  gap: 24px;
+  gap: 12px 24px;
+  grid-template-areas:
+    "step"
+    "size"
+    "box"
+    "side";
+  justify-items: center;
 }
-/* En computadora: vista previa a la izquierda, menú a la derecha */
+.preview-layout > .step { grid-area: step; justify-self: start; margin: 0; }
+.size-choice           { grid-area: size; }
+.preview-box           { grid-area: box; }
+.preview-side          { grid-area: side; width: 100%; max-width: 410px; }
+
+/* En computadora: vista previa a la izquierda; arriba a la derecha "See it on",
+   y abajo a la derecha el menú, empezando a la misma altura que la vista previa */
 @media (min-width: 900px) {
+  .preview-layout {
+    grid-template-areas:
+      "step size"
+      "box  side";
+    align-items: end;      /* fila de arriba: "Step 4 of 4" y "See it on" sobre la misma línea */
+  }
+  .preview-layout > .preview-box,
+  .preview-layout > .preview-side {
+    align-self: start;
+  }
   /* Modo teléfono: teléfono y menú juntitos, los dos centrados */
   .preview-layout.is-phone {
-    grid-template-columns: auto 20rem;
+    grid-template-columns: auto 22rem;
     justify-content: center;
-    align-items: start;
   }
   /* Modo computadora: la vista previa ocupa todo lo que sobra */
   .preview-layout.is-computer {
-    grid-template-columns: minmax(0, 1fr) 20rem;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) 22rem;
   }
   .preview-side {
+    max-width: none;
     position: sticky;
     top: 24px;
   }
-}
-
-.preview-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.preview-layout.is-phone .preview-stage {
-  width: min(100%, 410px);
-}
-.preview-stage .step {
-  align-self: flex-start;
+  .size-choice {
+    justify-self: stretch;
+  }
 }
 
 /* "See it on:  [Phone] [Computer]" en una sola línea */
@@ -295,7 +307,6 @@ body[data-screen="preview"] .desk {
   gap: 10px;
   width: 100%;
   max-width: 410px;
-  margin-bottom: 12px;
 }
 .size-label {
   font-weight: 700;
@@ -306,13 +317,13 @@ body[data-screen="preview"] .desk {
   display: grid;
   grid-template-columns: 1fr 1fr; /* los dos del mismo ancho */
   gap: 8px;
+  flex: 1;
 }
 .size-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 8.5rem;
   min-height: 40px;
   padding: 4px 12px;
   border: 2px solid var(--rule);

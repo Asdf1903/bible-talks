@@ -8,7 +8,7 @@
    ========================================================= */
 
 body.site {
-  --bg-image: url("img/bg-dore-creation.jpg"); /* fondo: grabado de Doré (dominio público). Se elige con ?bg= mientras probamos */
+  --bg-image: url("img/bg-dore-creation.jpg"); /* fondo: "Creation", grabado de Doré (dominio público). Elegido por Neil */
   --sheet-max: 1180px;
   font-family: var(--font-body);
   background: var(--paper-edge);

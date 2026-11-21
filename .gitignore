@@ -21,6 +21,7 @@ Thumbs.db
 desktop.ini
 .DS_Store
 
-# Imagen de fondo de PRUEBA (no se sube hasta elegir la definitiva)
+# Fondos de prueba que NO se eligieron (el elegido, bg-dore-creation.jpg, sí se sube)
 assets/img/bg-engraving-test.jpg
-assets/img/bg-dore-*.jpg
+assets/img/bg-dore-sinai.jpg
+assets/img/bg-dore-jacob.jpg

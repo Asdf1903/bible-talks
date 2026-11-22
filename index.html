@@ -58,7 +58,7 @@
         <a href="#doctrine">Doctrine</a>
         <a href="#bible-study">Bible Study</a>
         <a href="#prophecy">Prophecy</a>
-        <a href="about.html">About</a>
+        <a href="#about">About</a>
         <a href="contact.html">Contact</a>
       </nav>
 
@@ -118,10 +118,61 @@
       <p class="cat-empty" id="catEmpty" hidden>No studies here yet. Please come back soon.</p>
     </main>
 
+    <!-- ===== ABOUT (#about) =====
+         Página fija (no se sube desde el panel). Mismo truco: misma página, otra vista. -->
+    <main id="aboutView" class="wrap" hidden>
+      <header class="cat-head about-head">
+        <img class="about-photo" src="assets/img/neil.webp" alt="Neil Whatmough" width="150" height="150">
+        <h1>Neil Whatmough</h1>
+        <p class="cat-about">The writer of Bible Talks</p>
+      </header>
+
+      <!-- BORRADOR: falta el texto de Neil sobre sí mismo (Isra lo consigue).
+           Por ahora solo dice cosas que ya sabemos que son ciertas. -->
+      <section class="about-text">
+        <p>Neil has spent many years studying the Bible and sharing what he learns.
+          Every week he writes a new study, and Bible Talks keeps them all together:
+          a library for anyone looking for help, or wanting to understand certain verses.</p>
+        <p>He would love to hear your questions and thoughts.</p>
+      </section>
+
+      <section class="block">
+        <h2 class="block-title">What you will find here</h2>
+        <div class="sections"></div>
+      </section>
+
+      <section class="block">
+        <h2 class="block-title">Reading on Bible Talks</h2>
+        <ul class="features">
+          <li>
+            <span class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3.5 5v14c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v14"/></svg></span>
+            <strong>Like a book</strong>
+            <span>Turn the pages with a swipe or a tap, instead of scrolling.</span>
+          </li>
+          <li>
+            <span class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></span>
+            <strong>Listen</strong>
+            <span>Press <em>Listen</em> and the study is read aloud to you.</span>
+          </li>
+          <li>
+            <span class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span>
+            <strong>Night mode</strong>
+            <span>Easy on the eyes at night. Tap the moon at the top.</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="about-cta">
+        <p>Questions or thoughts about a study?</p>
+        <!-- Cuando exista Contact, este botón irá ahí -->
+        <a class="btn-read" href="mailto:neil@whatmough.ca">Write to Neil</a>
+      </section>
+    </main>
+
     <footer class="site-foot wrap">
       <span>© <span id="year">2026</span> Neil Whatmough · Bible Talks</span>
       <nav aria-label="Footer">
-        <a href="about.html">About</a>
+        <a href="#about">About</a>
         <a href="contact.html">Contact</a>
       </nav>
     </footer>

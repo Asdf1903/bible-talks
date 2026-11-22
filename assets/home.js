@@ -4,7 +4,7 @@
    2. Las 4 secciones en mosaico (color + ícono + descripción)
    3. "Recent studies": los últimos publicados
    4. "Coming soon": lo que Neil ya programó (lista pública site/upcoming)
-   5. Cada sección (#good-news, etc.): en esta misma página, sin otro HTML
+   5. Cada sección (#good-news, etc.) y About (#about): en esta misma página, sin otro HTML
 
    LA CINTA se arma sola, sin que Neil haga nada:
      1. Verse of the week: cambia cada lunes (assets/verses.js)
@@ -213,18 +213,20 @@ function startRibbon(slides, studies) {
 
 /* ---------- 2. Las 4 secciones en mosaico ---------- */
 
+// Pinta el mosaico en cada lugar que lo pida (class="sections"): la portada y About
 function paintSections(items) {
-  const grid = $("sections");
-  grid.innerHTML = "";
-  SECTIONS.forEach((s) => {
-    const n = items.filter((x) => x.data.category === s.id).length;
-    const a = el("a", "tile sec-" + s.id);
-    a.href = "#" + s.id;
-    const icon = el("span", "tile-icon");
-    icon.innerHTML = sectionIcon(s.id); // dibujo fijo nuestro, no datos de afuera
-    a.append(icon, el("h3", null, s.name), el("p", null, s.about));
-    if (n) a.append(el("span", "tile-count", n === 1 ? "1 study" : n + " studies"));
-    grid.appendChild(a);
+  document.querySelectorAll(".sections").forEach((grid) => {
+    grid.innerHTML = "";
+    SECTIONS.forEach((s) => {
+      const n = items.filter((x) => x.data.category === s.id).length;
+      const a = el("a", "tile sec-" + s.id);
+      a.href = "#" + s.id;
+      const icon = el("span", "tile-icon");
+      icon.innerHTML = sectionIcon(s.id); // dibujo fijo nuestro, no datos de afuera
+      a.append(icon, el("h3", null, s.name), el("p", null, s.about));
+      if (n) a.append(el("span", "tile-count", n === 1 ? "1 study" : n + " studies"));
+      grid.appendChild(a);
+    });
   });
 }
 
@@ -293,18 +295,27 @@ function paintSectionView(s) {
 }
 
 // Qué se ve según lo que va después del # en la dirección
+//   (nada) o #     → portada
+//   #good-news…    → una sección
+//   #about         → About
 function route() {
   const s = SECTIONS.find((x) => "#" + x.id === location.hash);
-  $("homeView").hidden = !!s;
+  const about = location.hash === "#about";
+  $("homeView").hidden = !!s || about;
   $("sectionView").hidden = !s;
-  document.title = s ? s.name + " · Bible Talks" : "Bible Talks · Studies by Neil Whatmough";
-  if (s) { paintSectionView(s); stopTimer(); } else { restart(); }
+  $("aboutView").hidden = !about;
+  document.title = s ? s.name + " · Bible Talks"
+    : about ? "About Neil Whatmough · Bible Talks"
+    : "Bible Talks · Studies by Neil Whatmough";
+  if (s) paintSectionView(s);
+  else document.body.classList.remove(...SECTIONS.map((x) => "sec-" + x.id));
+  if (s || about) stopTimer(); else restart(); // la cinta solo gira en la portada
 
   // Menú de arriba: marcar dónde estás y cerrarlo (en celular)
+  const current = s ? "#" + s.id : about ? "#about" : "#";
   document.querySelectorAll(".site-nav a").forEach((a) => {
-    const href = a.getAttribute("href");
-    const here = s ? href === "#" + s.id : href === "#";
-    if (here) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    if (a.getAttribute("href") === current) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
   });
   document.body.classList.remove("nav-open");
   const menuBtn = $("menuBtn");

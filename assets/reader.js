@@ -49,15 +49,15 @@ window.BibleReader = { start: function (reading) {
     });
   }
 
-  function formatDate(iso) {
-    var d = new Date(iso + "T12:00:00");
-    return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-  }
+  // Vista previa del panel (reading.html?preview=1): siempre abre en la página 1
+  // y no recuerda dónde se quedó (si no, cada estudio nuevo abría donde se quedó el anterior).
+  var isPreview = /[?&]preview=/.test(location.search);
 
   function render() {
     var category = CATEGORIES[reading.category] || "";
     var words = reading.bodyHtml.replace(/<[^>]+>/g, " ").trim().split(/\s+/).length;
     var minutes = Math.max(1, Math.round(words / 200));
+    var author = (reading.author || "").trim();
 
     document.title = reading.title + " · Bible Talks";
     $("backLabel").textContent = category || "Back";
@@ -70,15 +70,17 @@ window.BibleReader = { start: function (reading) {
         (category ? '<p class="eyebrow">' + escapeHtml(category) + "</p>" : "") +
         "<h1>" + escapeHtml(reading.title) + "</h1>" +
         (reading.subtitle ? '<p class="subtitle">' + escapeHtml(reading.subtitle) + "</p>" : "") +
-        // Cada dato en su cajita: si no cabe, baja completo (sin puntos huérfanos)
-        '<p class="meta"><span>By ' + escapeHtml(reading.author) + "</span> <span>· " + formatDate(reading.publishedAt) +
-        "</span> <span>· " + minutes + " min read</span></p>" +
+        // Cada dato en su cajita: si no cabe, baja completo (sin puntos huérfanos).
+        // Sin fecha: Neil no quiere que se vea. Sin autor = anónimo (no sale "By").
+        '<p class="meta">' + (author ? "<span>By " + escapeHtml(author) + "</span> <span>· " : "<span>") +
+        minutes + " min read</span></p>" +
       "</header>" +
       '<div class="body">' + reading.bodyHtml + "</div>" +
       '<footer class="end-card">' +
         '<div class="fleuron" aria-hidden="true">✦</div>' +
-        '<p class="sign">' + escapeHtml(reading.author) + "</p>" +
-        '<p>Questions or thoughts? <a href="mailto:neil@whatmough.ca">Write to Neil</a></p>' +
+        (author ? '<p class="sign">' + escapeHtml(author) + "</p>" : "") +
+        '<p>Questions or thoughts? <a href="mailto:neil@whatmough.ca">' +
+          (author === "Neil Whatmough" ? "Write to Neil" : "Write to us") + "</a></p>" +
         '<div class="end-actions">' +
           (reading.pdfUrl ? '<a class="btn" href="' + encodeURI(reading.pdfUrl) + '" download>Download PDF</a>' : "") +
           '<a class="btn ghost" href="category.html?c=' + reading.category + '">More ' + escapeHtml(category) + "</a>" +
@@ -128,7 +130,7 @@ window.BibleReader = { start: function (reading) {
   viewport.addEventListener("scroll", function () {
     if (!scrollMode) return;
     updateScrollProgress();
-    save("bt-pos-" + reading.id, String(firstBlockInView()));
+    if (!isPreview) save("bt-pos-" + reading.id, String(firstBlockInView()));
   }, { passive: true });
 
   // ¿En qué página (0, 1, 2...) cae este elemento?
@@ -162,6 +164,19 @@ window.BibleReader = { start: function (reading) {
     return 0;
   }
 
+  // Un título con una palabra muy larga ("PROPITIATION") no se parte en dos renglones:
+  // se achica la letra del título hasta que la palabra quepa en la página.
+  function fitTitle() {
+    var h1 = pagesEl.querySelector(".title-block h1");
+    if (!h1) return;
+    h1.style.fontSize = "";
+    var size = 2.1; // el mismo de reader.css
+    while (h1.scrollWidth > h1.clientWidth + 1 && size > 1.2) {
+      size -= 0.1;
+      h1.style.fontSize = size.toFixed(1) + "em";
+    }
+  }
+
   function layout(keepBlock) {
     var width = viewport.clientWidth;
     var height = viewport.clientHeight;
@@ -177,6 +192,7 @@ window.BibleReader = { start: function (reading) {
     pagesEl.style.columnCount = "auto";
     pagesEl.style.columnWidth = Math.floor(colWidth - 1) + "px";
     pagesEl.style.columnGap = gap + "px";
+    fitTitle();
 
     step = colWidth + gap;
     var endMark = $("endMark");
@@ -218,7 +234,7 @@ window.BibleReader = { start: function (reading) {
     nextBtn.disabled = view >= totalViews - 1;
     progressFill.style.width = ((view + 1) / totalViews * 100) + "%";
 
-    save("bt-pos-" + reading.id, String(firstBlockInView()));
+    if (!isPreview) save("bt-pos-" + reading.id, String(firstBlockInView()));
   }
 
   function next() { goTo(view + 1); }
@@ -323,7 +339,13 @@ window.BibleReader = { start: function (reading) {
 
   /* ---------- 6. Escuchar ---------- */
   // Usa la voz que ya trae el celular o la computadora (gratis).
-  // Lee párrafo por párrafo, resalta el que va leyendo y cambia de página solo.
+  // Lee ORACIÓN por oración (los párrafos de Neil son largos): resalta la oración
+  // que va leyendo y, si la voz lo permite, también la palabra. Cuando lo que lee
+  // ya está en la página siguiente, cambia de página solo.
+  //
+  // Cómo resalta sin tocar el texto: con "rangos" (un pedazo de texto marcado del
+  // carácter X al Y) y la función de resaltado del navegador (CSS Custom Highlight).
+  // Si el navegador es viejo y no la tiene, resalta el párrafo completo.
 
   var ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>';
   var ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
@@ -332,7 +354,15 @@ window.BibleReader = { start: function (reading) {
   var voice = null;
   var playing = false;
   var session = 0;     // cambia cada vez que se detiene, para ignorar avisos viejos
-  var current = -1;    // párrafo que se está leyendo
+  var current = null;  // dónde va: { block: párrafo, unit: pedazo dentro del párrafo }
+
+  var canHighlight = !!(window.CSS && CSS.highlights && window.Highlight);
+  var hlSentence = canHighlight ? new Highlight() : null;
+  var hlWord = canHighlight ? new Highlight() : null;
+  if (canHighlight) {
+    CSS.highlights.set("bt-sentence", hlSentence);
+    CSS.highlights.set("bt-word", hlWord);
+  }
 
   function paintListenButton() {
     listenBtn.innerHTML = (playing ? ICON_PAUSE : ICON_PLAY) +
@@ -350,67 +380,207 @@ window.BibleReader = { start: function (reading) {
             english[0] || null;
   }
 
-  // Algunos navegadores se cortan con textos largos: se lee oración por oración
-  function sentences(text) {
-    var parts = text.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+[”’"]*|[^.!?]+$/g) || [text];
-    var out = [];
-    parts.forEach(function (p) {
-      p = p.trim();
-      if (!p) return;
-      if (out.length && (out[out.length - 1].length + p.length) < 160) out[out.length - 1] += " " + p;
-      else out.push(p);
-    });
+  // --- El texto de un párrafo como una sola tira, sabiendo de qué nodo sale cada letra ---
+  function textMap(el) {
+    var nodes = [], text = "", n;
+    var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    while ((n = walker.nextNode())) {
+      nodes.push({ node: n, start: text.length });
+      text += n.nodeValue;
+    }
+    return { text: text, nodes: nodes };
+  }
+
+  // Rango del carácter `from` al `to` dentro de un párrafo
+  function rangeFor(map, from, to) {
+    function at(pos, isEnd) {
+      for (var i = 0; i < map.nodes.length; i++) {
+        var item = map.nodes[i], end = item.start + item.node.nodeValue.length;
+        if (pos < end || (isEnd && pos === end)) return { node: item.node, offset: Math.max(0, pos - item.start) };
+      }
+      var last = map.nodes[map.nodes.length - 1];
+      return { node: last.node, offset: last.node.nodeValue.length };
+    }
+    var a = at(from, false), b = at(to, true);
+    var r = document.createRange();
+    r.setStart(a.node, a.offset);
+    r.setEnd(b.node, b.offset);
+    return r;
+  }
+
+  // Parte el texto en oraciones. Un punto cuenta como fin de oración solo si:
+  //   - lo sigue un espacio (así "3.16" no se corta),
+  //   - lo que sigue NO empieza en minúscula o número ("1 Cor. 13" no se corta), y
+  //   - no es una abreviatura conocida ("Mr. Smith", "Rom. 5").
+  // Pedacitos muy cortos se pegan al siguiente.
+  var ABBR = /(?:^|[\s(])(mr|mrs|ms|dr|st|rev|gen|ex|lev|num|deut|josh|judg|sam|kgs|chron|neh|esth|ps|prov|eccl|isa|jer|lam|ezek|dan|hos|obad|mic|nah|hab|zeph|hag|zech|mal|matt|mk|lk|jn|rom|cor|gal|eph|phil|col|thess|tim|tit|philem|heb|jas|pet|vs|cf|ch|vv|e\.g|i\.e|etc|no)\.$/i;
+  function sentenceSpans(text) {
+    var out = [], start = 0, i = 0, L = text.length;
+    function push(a, b) {
+      while (a < b && /\s/.test(text[a])) a++;
+      while (b > a && /\s/.test(text[b - 1])) b--;
+      if (b > a) out.push({ from: a, to: b });
+    }
+    while (i < L) {
+      if (/[.!?…]/.test(text[i])) {
+        var j = i + 1;
+        while (j < L && /[.!?…"”’)\]]/.test(text[j])) j++;
+        var after = text.slice(j).match(/^\s+(\S)/);
+        var isEnd = j >= L || (after && !/[a-z0-9]/.test(after[1]));
+        if (isEnd && text[i] === "." && j === i + 1 && ABBR.test(text.slice(Math.max(start, i - 8), i + 1))) isEnd = false;
+        if (isEnd) { push(start, j); start = j; i = j; continue; }
+      }
+      i++;
+    }
+    push(start, L);
+    for (var k = 0; k < out.length - 1; k++) {
+      if (out[k].to - out[k].from < 12) { out[k + 1].from = out[k].from; out.splice(k, 1); k--; }
+    }
     return out;
   }
 
-  function markSpeaking(i) {
-    pagesEl.querySelectorAll(".speaking").forEach(function (el) { el.classList.remove("speaking"); });
-    var b = blocks()[i];
-    if (!b) return;
-    b.classList.add("speaking");
-    if (scrollMode) { b.scrollIntoView({ block: "center", behavior: "smooth" }); return; }
-    var v = viewOf(b);
+  // Lo que se le da a la voz de un jalón. Oraciones muy largas se parten en comas,
+  // porque algunas voces se cortan solas a los ~15 segundos.
+  var MAX_CHUNK = 180;
+  function speechUnits(text) {
+    var units = [];
+    sentenceSpans(text).forEach(function (s) {
+      var from = s.from;
+      while (s.to - from > MAX_CHUNK) {
+        var piece = text.slice(from, from + MAX_CHUNK);
+        var cut = Math.max(piece.lastIndexOf(", "), piece.lastIndexOf("; "), piece.lastIndexOf(": "),
+                           piece.lastIndexOf(" — "), piece.lastIndexOf(" – "));
+        if (cut < 40) cut = piece.lastIndexOf(" ");
+        if (cut < 1) break;
+        units.push({ from: from, to: from + cut + 1, sFrom: s.from, sTo: s.to });
+        from += cut + 1;
+        while (from < s.to && /\s/.test(text[from])) from++;
+      }
+      units.push({ from: from, to: s.to, sFrom: s.from, sTo: s.to });
+    });
+    return units.map(function (u) { u.text = text.slice(u.from, u.to); return u; });
+  }
+
+  // Los pedazos de un bloque. El encabezado trae su propio texto (data-say="…"):
+  // se lee entero y se resalta el bloque.
+  function unitsOf(el) {
+    var say = el.getAttribute("data-say");
+    if (say) return { map: null, list: [{ text: say }] };
+    var map = textMap(el);
+    return { map: map, list: map.nodes.length ? speechUnits(map.text) : [] };
+  }
+
+  // ¿En qué vista (pantalla de páginas) está este rango? -1 si no se sabe
+  function viewOfRange(r) {
+    var rect = r.getClientRects()[0];
+    if (!rect) return -1;
+    var page = Math.max(0, Math.floor((rect.left - pagesEl.getBoundingClientRect().left + 2) / step));
+    return Math.floor(page / perView);
+  }
+
+  // Que se vea lo que se está leyendo: cambia de página (o hace scroll) si hace falta
+  function showRange(r) {
+    if (scrollMode) {
+      var rect = r.getClientRects()[0], vr = viewport.getBoundingClientRect();
+      if (rect && (rect.top < vr.top || rect.bottom > vr.bottom)) {
+        viewport.scrollBy({ top: rect.top - vr.top - vr.height / 3, behavior: "smooth" });
+      }
+      return;
+    }
+    var v = viewOfRange(r);
+    if (v >= 0 && v !== view) goTo(v);
+  }
+
+  function showBlock(el) {
+    if (scrollMode) { el.scrollIntoView({ block: "center", behavior: "smooth" }); return; }
+    var v = viewOf(el);
     if (v !== view) goTo(v);
   }
 
-  function speakBlock(i, mySession) {
-    var list = blocks();
-    if (i >= list.length) { stopListening(); return; }
-    current = i;
-    markSpeaking(i);
-    var el = list[i];
-    var text = el.getAttribute("data-say") || el.textContent;
-    var queue = sentences(text);
-    var n = 0;
+  function clearMarks() {
+    pagesEl.querySelectorAll(".speaking").forEach(function (el) { el.classList.remove("speaking"); });
+    if (canHighlight) { hlSentence.clear(); hlWord.clear(); }
+  }
 
-    (function speakNext() {
-      if (mySession !== session) return;
-      if (n >= queue.length) { speakBlock(i + 1, mySession); return; }
-      var u = new SpeechSynthesisUtterance(queue[n]);
-      if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = "en-US"; }
-      u.rate = 0.92; // un poco más pausado que lo normal
-      u.onend = function () { n++; speakNext(); };
-      u.onerror = function (e) {
-        if (e.error === "interrupted" || e.error === "canceled") return;
-        n++; speakNext();
-      };
-      synth.speak(u);
-    })();
+  // Resalta la oración que empieza a leer
+  function markUnit(el, info, unit) {
+    clearMarks();
+    if (!info.map) { el.classList.add("speaking"); showBlock(el); return; }
+    if (canHighlight) hlSentence.add(rangeFor(info.map, unit.sFrom, unit.sTo));
+    else el.classList.add("speaking");
+    showRange(rangeFor(info.map, unit.from, unit.to));
+  }
+
+  // Resalta la palabra que está diciendo (solo si la voz avisa en qué palabra va)
+  function markWord(info, unit, charIndex, charLength) {
+    var from = unit.from + charIndex;
+    var len = charLength || ((/^\S+/.exec(info.map.text.slice(from, unit.to)) || [""])[0].length);
+    var to = Math.min(from + len, unit.to);
+    if (to <= from) return;
+    var r = rangeFor(info.map, from, to);
+    if (canHighlight) { hlWord.clear(); hlWord.add(r); }
+    showRange(r); // la página cambia justo en la palabra que pasa a la otra hoja
+  }
+
+  function speakFrom(bi, ui, mySession) {
+    if (mySession !== session) return;
+    var list = blocks();
+    if (bi >= list.length) { stopListening(); clearMarks(); current = null; return; }
+    var el = list[bi];
+    var info = unitsOf(el);
+    if (ui >= info.list.length) { speakFrom(bi + 1, 0, mySession); return; }
+    var unit = info.list[ui];
+    current = { block: bi, unit: ui };
+    markUnit(el, info, unit);
+
+    var u = new SpeechSynthesisUtterance(unit.text);
+    if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = "en-US"; }
+    u.rate = 0.92; // un poco más pausado que lo normal
+    u.onboundary = function (e) {
+      if (mySession !== session || !info.map || (e.name && e.name !== "word")) return;
+      markWord(info, unit, e.charIndex, e.charLength);
+    };
+    u.onend = function () { speakFrom(bi, ui + 1, mySession); };
+    u.onerror = function (e) {
+      if (e.error === "interrupted" || e.error === "canceled") return;
+      speakFrom(bi, ui + 1, mySession);
+    };
+    synth.speak(u);
+  }
+
+  // Desde dónde empezar: lo que se quedó resaltado si sigue a la vista;
+  // si no, la primera oración que se ve en esta página.
+  function startPoint() {
+    var list = blocks();
+    if (current && list[current.block]) {
+      var info0 = unitsOf(list[current.block]), u0 = info0.list[current.unit];
+      if (scrollMode || !u0) return current;
+      var v0 = info0.map ? viewOfRange(rangeFor(info0.map, u0.from, u0.to)) : viewOf(list[current.block]);
+      if (v0 === view) return current;
+    }
+    var bi = firstBlockInView();
+    var el = list[bi];
+    if (!el || scrollMode) return { block: bi, unit: 0 };
+    var info = unitsOf(el);
+    if (info.map) {
+      for (var k = 0; k < info.list.length; k++) {
+        if (viewOfRange(rangeFor(info.map, info.list[k].from, info.list[k].to)) >= view) return { block: bi, unit: k };
+      }
+    }
+    return { block: bi, unit: 0 };
   }
 
   function startListening() {
     if (!voice) pickVoice();
     synth.cancel();
+    var from = startPoint();
     playing = true;
     session++;
-    // Si el párrafo resaltado está en esta vista, sigue desde ahí; si no, desde lo que se ve
-    var start = firstBlockInView();
-    var b = blocks()[current];
-    if (b && !scrollMode && viewOf(b) === view) start = current;
     paintListenButton();
-    speakBlock(start, session);
+    speakFrom(from.block, from.unit, session);
   }
 
+  // Pausa: la oración se queda resaltada para saber dónde iba
   function stopListening() {
     playing = false;
     session++;
@@ -433,7 +603,7 @@ window.BibleReader = { start: function (reading) {
   paintThemeButton();
   paintListenButton();
 
-  var savedBlock = parseInt(load("bt-pos-" + reading.id, "0"), 10) || 0;
+  var savedBlock = isPreview ? 0 : (parseInt(load("bt-pos-" + reading.id, "0"), 10) || 0);
   pagesEl.style.setProperty("--read-size", SIZES[sizeIndex] + "px");
   $("fontDown").disabled = sizeIndex === 0;
   $("fontUp").disabled = sizeIndex === SIZES.length - 1;

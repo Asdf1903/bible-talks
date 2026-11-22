@@ -68,7 +68,7 @@ async function load() {
     category: r.category,
     title: r.title,
     subtitle: r.subtitle || "",
-    author: r.author || "Neil Whatmough",
+    author: typeof r.author === "string" ? r.author : "Neil Whatmough", // "" = anónimo
     publishedAt: isoDate(r.publishAt),
     pdfUrl: r.pdfUrl || null,
     bodyHtml: r.bodyHtml

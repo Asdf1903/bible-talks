@@ -39,11 +39,6 @@ const DEFAULT_VERSE = {
 const $ = (id) => document.getElementById(id);
 const link = (id) => "reading.html?id=" + encodeURIComponent(id);
 
-function niceDate(ts) {
-  const d = ts && ts.toDate ? ts.toDate() : new Date();
-  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-}
-
 // ~200 palabras por minuto
 function readTime(r) {
   const words = r.words || String(r.bodyHtml || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).length;
@@ -89,7 +84,7 @@ function slideElement(s, studies) {
     inner.append(el("p", "slide-kicker", kicker + " · " + sectionName(r.category)),
                  el("h2", "slide-title", r.title));
     if (r.subtitle) inner.append(el("p", "slide-sub", r.subtitle));
-    inner.append(el("p", "meta-line", niceDate(r.publishAt) + " · " + readTime(r)),
+    inner.append(el("p", "meta-line", readTime(r)),
                  el("span", "btn-read", "Read the study ›"));
   }
 
@@ -218,7 +213,7 @@ function paintRecent(items) {
     const a = el("a", "recent-item");
     a.href = link(item.id);
     a.append(el("span", "label", sectionName(r.category)), el("h3", null, r.title),
-             el("span", "meta-line", niceDate(r.publishAt) + " · " + readTime(r)));
+             el("span", "meta-line", readTime(r)));
     list.appendChild(a);
   });
   $("recentBlock").hidden = items.length === 0;

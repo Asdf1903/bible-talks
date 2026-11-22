@@ -7,7 +7,7 @@
      4. Home, My studies y Bin (listas tipo Drive, menú ⋮)
      5. Nuevo estudio, paso 1: subir el Word (ventana o arrastrando)
      6. Editor, paso 2: datos a la izquierda + vista previa en vivo a la derecha
-     7. Guardar, publicar, quitar del sitio, papelera, historial, nota
+     7. Guardar, publicar, quitar del sitio, papelera, historial
    Los datos se guardan en Firestore, colección `readings`.
    ========================================================= */
 import { auth, db, ENV } from "../assets/firebase.js";
@@ -47,7 +47,9 @@ let user = null;
 let allStudies = [];    // todos los estudios: [{ id, data, st }]
 let study = null;       // el que está abierto en el editor
 let savedSnapshot = ""; // cómo estaba el editor la última vez que se guardó (para saber si hay cambios)
-let studiesTab = "all";
+let studiesTab = "published"; // pestaña de My studies (la que más usa Neil va primero)
+let studiesSection = null;    // carpeta abierta: null = ver las 4 carpetas · "all" = todas juntas · o una sección
+const NEIL = "Neil Whatmough";
 
 /* ---------- Fechas ---------- */
 
@@ -182,7 +184,6 @@ onAuthStateChanged(auth, async (u) => {
   const hour = new Date().getHours();
   const part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   $("greeting").textContent = part + (first ? ", " + first : "");
-  $("userName").textContent = u.displayName || u.email || "";
 
   $("gate").hidden = true;
   $("app").hidden = false;
@@ -192,7 +193,8 @@ onAuthStateChanged(auth, async (u) => {
 
 /* ---------- 3. Navegación ---------- */
 // La dirección dice qué cuarto se ve:
-//   #home · #studies · #studies/published · #studies/scheduled · #studies/draft
+//   #home · #studies (= On the website) · #studies/<pestaña> (4 carpetas)
+//   #studies/<pestaña>/<sección o all> (dentro de una carpeta)
 //   #bin · #study/<id> (un estudio) · #new (el que se acaba de subir, aún sin guardar)
 
 let currentHash = "";
@@ -206,15 +208,17 @@ function showView(name) {
   document.body.dataset.view = name;
   closeMenu();
   closePop();
-  window.scrollTo(0, 0);
+  $("main").scrollTo(0, 0); // la hoja de estudios es la que hace scroll
 }
 
 async function route() {
   const h = location.hash.slice(1) || "home";
-  const [room, arg] = h.split("/");
+  const [room, arg, sub] = h.split("/");
 
   if (room === "studies") {
-    studiesTab = ["published", "scheduled", "draft"].includes(arg) ? arg : "all";
+    // #studies/<pestaña>/<carpeta>   ej. #studies/published/good-news · #studies/draft/all
+    studiesTab = ["published", "scheduled", "draft", "all"].includes(arg) ? arg : "published";
+    studiesSection = sub === "all" || CATEGORIES.some((c) => c.id === sub) ? sub : null;
     showView("studies");
     paintStudies();
   } else if (room === "bin") {
@@ -333,7 +337,16 @@ function headRow(kind) {
   return div;
 }
 
-const KEBAB = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/>' +
+// Nombre de la sección con su puntito de color (cada sección tiene su color)
+function paintSection(cell, id) {
+  cell.textContent = "";
+  if (!id) return;
+  const dot = document.createElement("span");
+  dot.className = "sec-dot sec-" + id;
+  cell.append(dot, catName(id));
+}
+
+const KEBAB ='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/>' +
   '<circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>';
 
 // Un renglón tipo Drive: [W] Título | Sección | Fecha | Estado | ⋮
@@ -351,7 +364,7 @@ function fileRow(item) {
   const date = niceDate(tsToIso(r.publishAt));
   row.querySelector("strong").textContent = r.title || "(no title)";
   row.querySelector(".sub").textContent = catName(r.category) + " · " + date;
-  row.querySelector(".c-section").textContent = catName(r.category);
+  paintSection(row.querySelector(".c-section"), r.category);
   row.querySelector(".c-date").textContent = date;
   const chip = row.querySelector(".chip");
   chip.textContent = item.st.label;
@@ -415,6 +428,28 @@ function paintHome() {
   $("recentEmpty").hidden = recent.length > 0;
 }
 
+/* My studies: primero 4 carpetas (una por sección); al abrir una, la lista.
+   Cada pestaña (On the website, Drafts, Coming up, All) muestra sus propias
+   carpetas: en "On the website" las carpetas solo traen lo publicado, etc.
+   Si Neil escribe en el buscador, se salta las carpetas y busca en todo. */
+const TAB_NAMES = { published: "On the website", draft: "Drafts", scheduled: "Coming up", all: "All" };
+
+const FOLDER_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>';
+
+let sortBy = "new";
+try { sortBy = localStorage.getItem("bt-admin-sort") || "new"; } catch (e) { /* sin memoria: el de siempre */ }
+
+function sortItems(items) {
+  const title = (x) => (x.data.title || "").toLowerCase();
+  const by = {
+    new: (p, q) => millis(q.data.publishAt) - millis(p.data.publishAt),
+    old: (p, q) => millis(p.data.publishAt) - millis(q.data.publishAt),
+    az: (p, q) => title(p).localeCompare(title(q)),
+    za: (p, q) => title(q).localeCompare(title(p))
+  };
+  return items.sort(by[sortBy] || by.new);
+}
+
 function paintStudies() {
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("on", t.dataset.tab === studiesTab));
   const live = allStudies.filter((x) => x.st.key !== "trashed");
@@ -424,16 +459,45 @@ function paintStudies() {
   $("tabCountScheduled").textContent = n(count("scheduled"));
   $("tabCountDraft").textContent = n(count("draft"));
 
+  const inTab = live.filter((x) => studiesTab === "all" || x.st.key === studiesTab);
   const words = $("searchInput").value.trim().toLowerCase();
-  const section = $("sectionFilter").value;
-  const items = live.filter((x) =>
-    (studiesTab === "all" || x.st.key === studiesTab) &&
-    (!section || x.data.category === section) &&
-    (!words || ((x.data.title || "") + " " + (x.data.subtitle || "")).toLowerCase().includes(words)));
+  const showFolders = !studiesSection && !words;
 
-  // Orden: lo próximo primero en "Coming up"; en lo demás, lo más reciente primero
-  if (studiesTab === "scheduled") items.sort((p, q) => millis(p.data.publishAt) - millis(q.data.publishAt));
-  else if (studiesTab === "published") items.sort((p, q) => millis(q.data.publishAt) - millis(p.data.publishAt));
+  // --- Las 4 carpetas ---
+  const folders = $("folders");
+  folders.hidden = !showFolders;
+  folders.innerHTML = "";
+  if (showFolders) {
+    CATEGORIES.forEach((c) => {
+      const k = inTab.filter((x) => x.data.category === c.id).length;
+      const a = document.createElement("a");
+      a.className = "folder sec-" + c.id + (k ? "" : " is-empty");
+      a.href = "#studies/" + studiesTab + "/" + c.id;
+      a.innerHTML = FOLDER_ICON + '<span class="folder-name"></span><span class="folder-count"></span>';
+      a.querySelector(".folder-name").textContent = c.name;
+      a.querySelector(".folder-count").textContent = k === 1 ? "1 study" : (k || "No") + " studies";
+      folders.appendChild(a);
+    });
+    if (inTab.length) {
+      const all = document.createElement("a");
+      all.className = "folder-all link";
+      all.href = "#studies/" + studiesTab + "/all";
+      all.textContent = "See all " + inTab.length + " together ›";
+      folders.appendChild(all);
+    }
+  }
+
+  // --- La lista (dentro de una carpeta, o resultados de búsqueda) ---
+  $("listBar").hidden = showFolders;
+  $("pathTab").textContent = TAB_NAMES[studiesTab];
+  $("pathBack").href = "#studies/" + studiesTab;
+  $("pathHere").textContent = words ? "Search results"
+    : studiesSection === "all" ? "All sections" : catName(studiesSection);
+  $("sortInput").value = sortBy;
+
+  const items = showFolders ? [] : sortItems(inTab.filter((x) =>
+    (words || studiesSection === "all" || x.data.category === studiesSection) &&
+    (!words || ((x.data.title || "") + " " + (x.data.subtitle || "")).toLowerCase().includes(words))));
 
   const list = $("studiesList");
   list.innerHTML = "";
@@ -441,21 +505,20 @@ function paintStudies() {
   items.forEach((x) => list.appendChild(fileRow(x)));
 
   const empty = $("studiesEmpty");
-  empty.hidden = items.length > 0;
-  empty.textContent = (words || section) ? "No studies match your search."
-    : studiesTab === "scheduled" ? "Nothing is scheduled. Pick a later date when you publish, and it will wait here."
-    : studiesTab === "draft" ? "No drafts."
-    : "No studies yet. Click “New study” or drag a Word document here.";
+  empty.hidden = showFolders ? inTab.length > 0 || live.length > 0 : items.length > 0;
+  empty.textContent = words ? "No studies match your search."
+    : !live.length ? "No studies yet. Click “New study” or drag a Word document here."
+    : studiesTab === "scheduled" ? "Nothing here. To publish on a later date, open “Publish it on a later date” when you publish."
+    : studiesTab === "draft" ? "No drafts here."
+    : "Nothing in this folder yet.";
 }
 
-CATEGORIES.forEach((c) => {
-  const o = document.createElement("option");
-  o.value = c.id;
-  o.textContent = c.name;
-  $("sectionFilter").appendChild(o);
-});
 $("searchInput").addEventListener("input", paintStudies);
-$("sectionFilter").addEventListener("change", paintStudies);
+$("sortInput").addEventListener("change", () => {
+  sortBy = $("sortInput").value;
+  try { localStorage.setItem("bt-admin-sort", sortBy); } catch (e) { /* no pasa nada */ }
+  paintStudies();
+});
 
 function paintBin() {
   const items = allStudies.filter((x) => x.st.key === "trashed")
@@ -474,7 +537,7 @@ function paintBin() {
     const when = x.data.trashedAt ? niceDate(tsToIso(x.data.trashedAt)) : "";
     row.querySelector("strong").textContent = x.data.title || "(no title)";
     row.querySelector(".sub").textContent = catName(x.data.category);
-    row.querySelector(".c-section").textContent = catName(x.data.category);
+    paintSection(row.querySelector(".c-section"), x.data.category);
     row.querySelector(".c-date").textContent = when;
     const back = row.querySelector("button");
     back.addEventListener("click", async () => {
@@ -543,7 +606,7 @@ window.addEventListener("scroll", closePop, true);
 function newStudy() {
   return { id: null, category: "", title: "", subtitle: "", book: "", passage: "",
            bodyHtml: "", words: 0, sourceName: "", status: "draft", date: todayIso(),
-           publishAt: null, warnings: [] };
+           publishAt: null, warnings: [], author: NEIL };
 }
 
 function startNew() {
@@ -551,6 +614,7 @@ function startNew() {
   $("fileInput").value = "";
   $("fileError").hidden = true;
   $("fileWorking").hidden = true;
+  $("pickerHint").hidden = true;
   closeMenu();
   $("newDialog").showModal();
 }
@@ -601,7 +665,19 @@ async function handleNewFile(file) {
   else { ignoreHash = true; location.hash = "#new"; route(); }
 }
 
-$("fileInput").addEventListener("change", (e) => handleNewFile(e.target.files[0]));
+$("fileInput").addEventListener("change", (e) => {
+  $("pickerHint").hidden = true;
+  handleNewFile(e.target.files[0]);
+});
+
+// La ventana de Windows para elegir archivo bloquea la página mientras está abierta
+// (y a veces sale en el otro monitor). Mientras tanto, un aviso dice dónde buscarla.
+// Se quita al elegir, al darle Cancel o cuando la página vuelve a tener el foco.
+$("fileInput").addEventListener("click", () => { $("pickerHint").hidden = false; });
+$("fileInput").addEventListener("cancel", () => { $("pickerHint").hidden = true; });
+window.addEventListener("focus", () => {
+  setTimeout(() => { $("pickerHint").hidden = true; }, 400);
+});
 
 const dropZone = $("dropZone");
 ["dragenter", "dragover"].forEach((ev) => dropZone.addEventListener(ev, (e) => {
@@ -635,13 +711,36 @@ window.addEventListener("drop", (e) => {
 
 /* ---------- 6. Editor (paso 2): datos + vista previa ---------- */
 
-$("categoryInput").innerHTML = '<option value="">Choose a section…</option>';
+// Paso "Choose the section": 4 botones, cada uno con el color de su sección
 CATEGORIES.forEach((c) => {
-  const o = document.createElement("option");
-  o.value = c.id;
-  o.textContent = c.name;
-  $("categoryInput").appendChild(o);
+  const label = document.createElement("label");
+  label.className = "sec-option sec-" + c.id;
+  label.innerHTML = '<input type="radio" name="category"><span class="sec-dot"></span><span></span>';
+  label.querySelector("input").value = c.id;
+  label.lastChild.textContent = c.name;
+  $("sectionPick").appendChild(label);
 });
+const getCategory = () => (document.querySelector('input[name="category"]:checked') || {}).value || "";
+function setCategory(id) {
+  document.querySelectorAll('input[name="category"]').forEach((r) => { r.checked = r.value === id; });
+}
+
+// Paso "Whose name goes on it?": Neil, anónimo u otro nombre.
+// En Firestore: author = "Neil Whatmough" · "" (anónimo) · el otro nombre
+function getAuthor() {
+  const pick = (document.querySelector('input[name="author"]:checked') || {}).value || "neil";
+  if (pick === "anon") return "";
+  if (pick === "other") return $("authorOther").value.trim();
+  return NEIL;
+}
+function setAuthor(name) {
+  const pick = name === NEIL ? "neil" : name === "" ? "anon" : "other";
+  document.querySelectorAll('input[name="author"]').forEach((r) => { r.checked = r.value === pick; });
+  $("authorOther").value = pick === "other" ? name : "";
+  $("authorOther").hidden = pick !== "other";
+}
+const authorPick = () => (document.querySelector('input[name="author"]:checked') || {}).value || "neil";
+
 $("bookInput").innerHTML = '<option value="">Choose a book…</option>';
 BOOKS.forEach((b) => {
   const o = document.createElement("option");
@@ -653,13 +752,14 @@ function loadStudy(id, r) {
   study = { id, category: r.category, title: r.title, subtitle: r.subtitle || "", book: r.book || "",
             passage: r.passage || "", bodyHtml: r.bodyHtml, words: r.words || 0,
             sourceName: r.sourceName || "", status: r.status, date: tsToIso(r.publishAt),
-            publishAt: r.publishAt || null, warnings: [] };
+            publishAt: r.publishAt || null, warnings: [],
+            author: typeof r.author === "string" ? r.author : NEIL };
   savedSnapshot = snapshot(study);
 }
 
 // Lo que importa para saber si hay cambios sin guardar
 function snapshot(s) {
-  return JSON.stringify([s.category, s.title, s.subtitle, s.book, s.passage, s.date, s.bodyHtml]);
+  return JSON.stringify([s.category, s.title, s.subtitle, s.book, s.passage, s.date, s.bodyHtml, s.author]);
 }
 function isDirty() {
   return !!study && document.body.dataset.view === "study" && snapshot(study) !== savedSnapshot;
@@ -669,35 +769,37 @@ const isBiblical = () => !!(CATEGORIES.find((c) => c.id === study.category) || {
 
 // Llena el editor con el estudio abierto
 function paintEditor() {
-  $("categoryInput").value = study.category;
+  setCategory(study.category);
   $("titleInput").value = study.title;
   $("subtitleInput").value = study.subtitle;
   $("bookInput").value = study.book;
   $("passageInput").value = study.passage;
+  setAuthor(study.author);
   $("dateInput").value = study.date;
+  $("laterBox").open = study.date > todayIso(); // si ya tiene fecha futura, que se vea
   $("docName").textContent = study.sourceName || "Word document";
   $("docWords").textContent = study.words ? study.words.toLocaleString("en-US") + " words" : "";
   $("docWarnings").hidden = !study.warnings.length;
   $("docWarnings").textContent = study.warnings.join(" ");
   $("replaceError").hidden = true;
-  $("categoryInput").classList.remove("need");
+  $("sectionPick").classList.remove("need");
   editorProblem("");
-  loadNote();
   syncEditor();
   refreshPreview(true);
 }
 
 // Lee los campos y los guarda en `study`
 function readFields() {
-  study.category = $("categoryInput").value;
+  study.category = getCategory();
   study.title = $("titleInput").value.trim();
   study.subtitle = $("subtitleInput").value.trim();
   study.book = isBiblical() ? $("bookInput").value : "";
   study.passage = isBiblical() ? $("passageInput").value.trim() : "";
+  study.author = getAuthor();
   study.date = $("dateInput").value || todayIso();
 }
 
-// Título, estado, botones y "cambios sin guardar"
+// Título, estado, botones, "cambios sin guardar" y cuál paso sigue
 function syncEditor() {
   const isNew = !study.id;
   const published = study.status === "published";
@@ -715,7 +817,9 @@ function syncEditor() {
   const c = CATEGORIES.find((x) => x.id === study.category);
   $("categoryAbout").textContent = c ? c.about : "Where it will appear on the website.";
   $("passageFields").hidden = !isBiblical();
+  $("authorOther").hidden = authorPick() !== "other";
 
+  $("publishTitle").textContent = published ? "Save your changes" : "Publish";
   $("saveDraftBtn").hidden = published;
   $("saveDraftBtn").disabled = !dirty;
   $("saveChangesBtn").hidden = !published;
@@ -723,17 +827,32 @@ function syncEditor() {
   $("publishBtn").hidden = published;
   $("publishBtn").disabled = false;
   $("publishBtn").textContent = future ? "Schedule for " + niceDate(study.date) : "Publish now";
+
+  // El paso que sigue se ilumina: sección → título → (otro nombre) → publicar
+  const next = !study.category ? "stepSection"
+    : !study.title ? "stepTitle"
+    : authorPick() === "other" && !study.author ? "stepAuthor"
+    : dirty ? "stepPublish" : "";
+  ["stepSection", "stepTitle", "stepAuthor", "stepPublish"].forEach((id) => {
+    $(id).classList.toggle("next", id === next);
+  });
 }
 
-// Cada vez que Neil escribe: actualizar y refrescar la vista previa
-["categoryInput", "titleInput", "subtitleInput", "bookInput", "passageInput", "dateInput"].forEach((id) => {
-  $(id).addEventListener("input", () => {
-    readFields();
-    if (id === "categoryInput") $("categoryInput").classList.remove("need");
-    syncEditor();
-    refreshPreview();
-  });
+// Cada vez que Neil escribe o elige algo: actualizar y refrescar la vista previa
+function onEdit(e) {
+  readFields();
+  if (e && e.target && e.target.name === "category") $("sectionPick").classList.remove("need");
+  syncEditor();
+  refreshPreview();
+}
+["titleInput", "subtitleInput", "bookInput", "passageInput", "dateInput", "authorOther"].forEach((id) => {
+  $(id).addEventListener("input", onEdit);
 });
+$("sectionPick").addEventListener("change", onEdit);
+document.querySelectorAll('input[name="author"]').forEach((r) => r.addEventListener("change", (e) => {
+  onEdit(e);
+  if (r.value === "other" && r.checked) $("authorOther").focus();
+}));
 
 /* Vista previa en vivo: la página real del lector (reading.html?preview=1)
    dentro de un "celular". Cuando carga, nos avisa y le mandamos la lectura
@@ -756,7 +875,7 @@ window.addEventListener("message", (e) => {
       category: study.category || "good-news",
       title: study.title || "Untitled study",
       subtitle: study.subtitle,
-      author: "Neil Whatmough",
+      author: study.author,
       publishedAt: study.date,
       pdfUrl: null,
       bodyHtml: study.bodyHtml
@@ -817,14 +936,19 @@ function editorProblem(msg) {
 function checkFields() {
   readFields();
   if (!study.category) {
-    $("categoryInput").classList.add("need");
-    $("categoryInput").focus();
-    editorProblem("Please choose a section for this study.");
+    $("sectionPick").classList.add("need");
+    $("stepSection").scrollIntoView({ behavior: "smooth", block: "center" });
+    editorProblem("Please choose a section for this study (step 1).");
     return false;
   }
   if (!study.title) {
     $("titleInput").focus();
     editorProblem("Please write a title.");
+    return false;
+  }
+  if (authorPick() === "other" && !study.author) {
+    $("authorOther").focus();
+    editorProblem("Please write the name that goes on the study, or choose another option.");
     return false;
   }
   editorProblem("");
@@ -837,7 +961,7 @@ async function save(mode) {
   const data = {
     category: study.category, title: study.title, subtitle: study.subtitle,
     book: study.book, passage: study.passage, bodyHtml: study.bodyHtml, words: study.words,
-    sourceName: study.sourceName, author: "Neil Whatmough",
+    sourceName: study.sourceName, author: study.author,
     updatedAt: serverTimestamp(), updatedBy: user.uid
   };
   if (mode === "publish") {
@@ -865,7 +989,6 @@ async function save(mode) {
     // La dirección pasa de #new a #study/<id> sin volver a cargar
     history.replaceState(null, "", "#study/" + encodeURIComponent(study.id));
     currentHash = location.hash;
-    loadNote();
   }
   study.status = data.status;
   if (data.publishAt) {
@@ -964,46 +1087,3 @@ async function keepOldVersion(id, next) {
     savedAt: serverTimestamp(), savedBy: user.uid
   });
 }
-
-/* ---------- Nota privada ---------- */
-// Va en la colección `notes` (no dentro del estudio), porque las reglas de Firestore
-// no pueden esconder un solo campo: si estuviera en el estudio publicado, sería pública.
-
-let noteTimer = null;
-let noteFor = null; // de qué estudio es la nota que se está escribiendo
-
-async function loadNote() {
-  if (noteTimer) await saveNote(); // no perder lo que se estaba escribiendo
-  noteFor = study.id;
-  $("noteInput").value = "";
-  $("noteStatus").textContent = "";
-  $("noteInput").hidden = !study.id;
-  $("noteLater").hidden = !!study.id;
-  if (!study.id) return;
-  try {
-    const snap = await getDoc(doc(db, "notes", study.id));
-    if (snap.exists() && noteFor === study.id) $("noteInput").value = snap.data().text || "";
-  } catch (e) { console.error(e); }
-}
-
-async function saveNote() {
-  clearTimeout(noteTimer);
-  noteTimer = null;
-  if (!noteFor) return;
-  try {
-    await setDoc(doc(db, "notes", noteFor), {
-      text: $("noteInput").value, updatedAt: serverTimestamp(), updatedBy: user.uid
-    });
-    $("noteStatus").textContent = "Saved ✓";
-  } catch (e) {
-    console.error(e);
-    $("noteStatus").textContent = "The note couldn’t be saved. Please try again.";
-  }
-}
-
-$("noteInput").addEventListener("input", () => {
-  $("noteStatus").textContent = "Saving…";
-  clearTimeout(noteTimer);
-  noteTimer = setTimeout(saveNote, 1000);
-});
-$("noteInput").addEventListener("blur", () => { if (noteTimer) saveNote(); });

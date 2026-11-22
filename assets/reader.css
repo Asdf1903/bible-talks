@@ -187,6 +187,8 @@ body.reader {
   font-size: 2.1em;
   line-height: 1.1;
   letter-spacing: 0.02em;
+  overflow-wrap: normal; /* una palabra larga no se parte: reader.js achica la letra (fitTitle) */
+  word-break: normal;
 }
 
 .subtitle {
@@ -247,6 +249,13 @@ body.reader {
   border-radius: 4px;
   box-shadow: 0 0 0 4px var(--highlight);
   transition: background-color 0.3s;
+}
+/* Oración que se está leyendo, y la palabra (si la voz avisa en qué palabra va) */
+::highlight(bt-sentence) {
+  background-color: var(--highlight);
+}
+::highlight(bt-word) {
+  background-color: color-mix(in srgb, var(--gold) 60%, var(--highlight));
 }
 
 /* Cierre de la lectura (última página) */

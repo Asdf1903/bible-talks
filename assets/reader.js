@@ -91,6 +91,22 @@ window.BibleReader = { start: function (reading) {
     // Cada párrafo es un "bloque" que se puede leer en voz alta
     pagesEl.querySelectorAll(".body > p, .body > blockquote, .body > h2, .body > h3, .body > li")
       .forEach(function (el) { el.setAttribute("data-say", ""); });
+
+    // Vista previa del panel: solo el estudio, sin salidas a otras páginas
+    // (si no, Neil podía terminar navegando el sitio dentro del "celular").
+    if (isPreview) {
+      $("backLink").style.visibility = "hidden";
+      var endActions = pagesEl.querySelector(".end-actions");
+      if (endActions) endActions.remove();
+      pagesEl.querySelectorAll(".end-card a").forEach(function (a) {
+        a.replaceWith(document.createTextNode(a.textContent)); // "Write to Neil" como texto
+      });
+      // Enlaces dentro del estudio (YouTube, etc.): que se abran aparte, no dentro de la vista previa
+      pagesEl.querySelectorAll(".body a[href]").forEach(function (a) {
+        a.target = "_blank";
+        a.rel = "noopener";
+      });
+    }
   }
 
   /* ---------- 2. Partir en páginas ---------- */

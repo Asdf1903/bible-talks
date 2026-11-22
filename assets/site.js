@@ -38,6 +38,11 @@
     });
   }
 
+  // PRUEBA TEMPORAL: comparar el mosaico de estudios con ?tiles=strip o ?tiles=cap
+  // (ver site.css, "PRUEBA"). Quitar cuando se elija.
+  var tiles = new URLSearchParams(location.search).get("tiles");
+  if (tiles === "strip" || tiles === "cap") document.body.classList.add("tiles-" + tiles);
+
   var year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
 })();

@@ -58,6 +58,9 @@ window.BibleReader = { start: function (reading) {
     var words = reading.bodyHtml.replace(/<[^>]+>/g, " ").trim().split(/\s+/).length;
     var minutes = Math.max(1, Math.round(words / 200));
     var author = (reading.author || "").trim();
+    // Foto (opcional, enlace https): en una esquina, con el texto alrededor
+    var picture = /^https:\/\/\S+$/i.test(reading.image || "")
+      ? '<figure class="reading-picture"><img src="' + escapeHtml(reading.image) + '" alt=""></figure>' : "";
 
     document.title = reading.title + " · Bible Talks";
     $("backLabel").textContent = category || "Back";
@@ -75,7 +78,7 @@ window.BibleReader = { start: function (reading) {
         '<p class="meta">' + (author ? "<span>By " + escapeHtml(author) + "</span> <span>· " : "<span>") +
         minutes + " min read</span></p>" +
       "</header>" +
-      '<div class="body">' + reading.bodyHtml + "</div>" +
+      '<div class="body">' + picture + reading.bodyHtml + "</div>" +
       '<footer class="end-card">' +
         '<div class="fleuron" aria-hidden="true">✦</div>' +
         (author ? '<p class="sign">' + escapeHtml(author) + "</p>" : "") +
@@ -624,6 +627,14 @@ window.BibleReader = { start: function (reading) {
   $("fontDown").disabled = sizeIndex === 0;
   $("fontUp").disabled = sizeIndex === SIZES.length - 1;
   layout(savedBlock);
+
+  // La foto cambia el acomodo cuando termina de cargar: volver a partir en páginas.
+  // Si el enlace ya no sirve, se quita la foto (mejor sin foto que con un cuadro roto).
+  var pic = pagesEl.querySelector(".reading-picture img");
+  if (pic) {
+    pic.addEventListener("load", function () { layout(firstBlockInView()); });
+    pic.addEventListener("error", function () { pic.parentNode.remove(); layout(firstBlockInView()); });
+  }
 
   // Cuando terminan de cargar las letras, o si se gira el celular, se vuelve a acomodar
   if (document.fonts && document.fonts.ready) {

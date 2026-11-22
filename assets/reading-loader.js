@@ -71,7 +71,8 @@ async function load() {
     author: typeof r.author === "string" ? r.author : "Neil Whatmough", // "" = anónimo
     publishedAt: isoDate(r.publishAt),
     pdfUrl: r.pdfUrl || null,
-    bodyHtml: r.bodyHtml
+    bodyHtml: r.bodyHtml,
+    image: r.image || ""
   });
 
   // Vista previa de un borrador: aviso que también sirve para regresar al panel.

@@ -364,6 +364,25 @@
                 </label>
               </div>
 
+              <!-- Foto (opcional): por ahora, pegando el enlace de una foto que ya está en internet.
+                   (Subirla desde la compu necesita Firebase Storage = plan Blaze: después.) -->
+              <div class="step-item" id="stepPicture">
+                <h2 class="step-title">Add a picture <em class="optional">(optional)</em></h2>
+                <label class="field">
+                  <span>Link to the picture</span>
+                  <input type="url" id="imageInput" placeholder="https://…" autocomplete="off">
+                  <small class="muted">On the picture you like, right-click and choose <strong>Copy image address</strong>, then paste it here.
+                    It appears in a corner of the study, with the text around it.</small>
+                </label>
+                <div class="image-check" id="imageCheck" hidden>
+                  <img id="imagePreview" alt="">
+                  <div>
+                    <p class="small" id="imageStatus"></p>
+                    <button class="link-btn" id="imageRemove" type="button">Remove the picture</button>
+                  </div>
+                </div>
+              </div>
+
               <div class="step-item" id="passageFields" hidden>
                 <h2 class="step-title">Bible passage</h2>
                 <div class="field-row">

@@ -220,11 +220,13 @@ body.reader {
 }
 
 /* Letra capital en el primer párrafo */
-.body > p:first-child {
+.body > p:first-child,
+.body > .reading-picture + p { /* con foto, el primer párrafo va después de ella */
   text-indent: 0;
 }
 
-.body > p:first-child::first-letter {
+.body > p:first-child::first-letter,
+.body > .reading-picture + p::first-letter {
   float: left;
   font-family: var(--font-title);
   font-size: 3.4em;
@@ -433,4 +435,20 @@ body.scroll-mode .page-btn {
 /* Fecha, autor y minutos: cada dato baja completo si no cabe */
 .title-block .meta span {
   white-space: nowrap;
+}
+
+/* Foto del estudio: en la esquina de arriba a la derecha, con el texto alrededor */
+.reading-picture {
+  float: right;
+  width: 45%;
+  max-width: 280px;
+  margin: 0.25em 0 0.7em 1em;
+}
+.reading-picture img {
+  display: block;
+  width: 100%;
+  max-height: 45vh;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }

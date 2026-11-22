@@ -22,6 +22,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { planSlides, upcomingChanges, upcomingVerses, verseList, safeLink } from "../assets/ribbon.js";
 import { VERSES } from "../assets/verses.js";
+import { sectionIcon } from "../assets/sections.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -450,7 +451,7 @@ function paintHome() {
    Si Neil escribe en el buscador, se salta las carpetas y busca en todo. */
 const TAB_NAMES = { published: "On the website", draft: "Drafts", scheduled: "Coming up", all: "All" };
 
-const FOLDER_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>';
+// Cada carpeta lleva el ícono de su sección (los mismos del sitio: assets/sections.js)
 
 let sortBy = "new";
 try { sortBy = localStorage.getItem("bt-admin-sort") || "new"; } catch (e) { /* sin memoria: el de siempre */ }
@@ -489,7 +490,8 @@ function paintStudies() {
       const a = document.createElement("a");
       a.className = "folder sec-" + c.id + (k ? "" : " is-empty");
       a.href = "#studies/" + studiesTab + "/" + c.id;
-      a.innerHTML = FOLDER_ICON + '<span class="folder-name"></span><span class="folder-count"></span>';
+      a.innerHTML = '<span class="folder-icon">' + sectionIcon(c.id) + '</span>' +
+        '<span class="folder-name"></span><span class="folder-count"></span>';
       a.querySelector(".folder-name").textContent = c.name;
       a.querySelector(".folder-count").textContent = k === 1 ? "1 study" : (k || "No") + " studies";
       folders.appendChild(a);
@@ -622,7 +624,7 @@ window.addEventListener("scroll", closePop, true);
 function newStudy() {
   return { id: null, category: "", title: "", subtitle: "", book: "", passage: "",
            bodyHtml: "", words: 0, sourceName: "", status: "draft", date: todayIso(),
-           publishAt: null, warnings: [], author: NEIL };
+           publishAt: null, warnings: [], author: NEIL, image: "" };
 }
 
 function startNew() {
@@ -769,13 +771,13 @@ function loadStudy(id, r) {
             passage: r.passage || "", bodyHtml: r.bodyHtml, words: r.words || 0,
             sourceName: r.sourceName || "", status: r.status, date: tsToIso(r.publishAt),
             publishAt: r.publishAt || null, warnings: [],
-            author: typeof r.author === "string" ? r.author : NEIL };
+            author: typeof r.author === "string" ? r.author : NEIL, image: r.image || "" };
   savedSnapshot = snapshot(study);
 }
 
 // Lo que importa para saber si hay cambios sin guardar
 function snapshot(s) {
-  return JSON.stringify([s.category, s.title, s.subtitle, s.book, s.passage, s.date, s.bodyHtml, s.author]);
+  return JSON.stringify([s.category, s.title, s.subtitle, s.book, s.passage, s.date, s.bodyHtml, s.author, s.image]);
 }
 function isDirty() {
   return !!study && document.body.dataset.view === "study" && snapshot(study) !== savedSnapshot;
@@ -791,6 +793,8 @@ function paintEditor() {
   $("bookInput").value = study.book;
   $("passageInput").value = study.passage;
   setAuthor(study.author);
+  $("imageInput").value = study.image || "";
+  checkImage();
   $("dateInput").value = study.date;
   $("laterBox").open = study.date > todayIso(); // si ya tiene fecha futura, que se vea
   $("docName").textContent = study.sourceName || "Word document";
@@ -812,6 +816,7 @@ function readFields() {
   study.book = isBiblical() ? $("bookInput").value : "";
   study.passage = isBiblical() ? $("passageInput").value.trim() : "";
   study.author = getAuthor();
+  study.image = $("imageInput").value.trim();
   study.date = $("dateInput").value || todayIso();
 }
 
@@ -861,7 +866,7 @@ function onEdit(e) {
   syncEditor();
   refreshPreview();
 }
-["titleInput", "subtitleInput", "bookInput", "passageInput", "dateInput", "authorOther"].forEach((id) => {
+["titleInput", "subtitleInput", "bookInput", "passageInput", "dateInput", "authorOther", "imageInput"].forEach((id) => {
   $(id).addEventListener("input", onEdit);
 });
 $("sectionPick").addEventListener("change", onEdit);
@@ -869,6 +874,49 @@ document.querySelectorAll('input[name="author"]').forEach((r) => r.addEventListe
   onEdit(e);
   if (r.value === "other" && r.checked) $("authorOther").focus();
 }));
+
+/* Foto por enlace: revisa que el enlace sí abra una foto y enseña una miniatura.
+   Solo https:// (los enlaces de Google Drive / Google Photos no sirven como foto directa). */
+const NOT_A_PICTURE = /drive\.google\.com|photos\.google\.com|photos\.app\.goo\.gl|docs\.google\.com/i;
+function imageProblem(url) {
+  if (!url) return "";
+  if (!/^https:\/\/\S+$/i.test(url)) return "The link must start with https://";
+  if (NOT_A_PICTURE.test(url)) return "Links from Google Drive or Google Photos don’t work here. " +
+    "Please use a picture from a web page: right-click it and choose “Copy image address”.";
+  return "";
+}
+let imageTimer = null;
+function checkImage() {
+  clearTimeout(imageTimer);
+  const url = $("imageInput").value.trim();
+  const box = $("imageCheck"), img = $("imagePreview"), status = $("imageStatus");
+  box.hidden = !url;
+  if (!url) return;
+  const problem = imageProblem(url);
+  if (problem) {
+    img.hidden = true;
+    status.textContent = problem;
+    status.className = "small error";
+    return;
+  }
+  status.textContent = "Checking the picture…";
+  status.className = "small muted";
+  imageTimer = setTimeout(() => {
+    img.onload = () => { img.hidden = false; status.textContent = "✓ The picture works."; status.className = "small ok"; };
+    img.onerror = () => {
+      img.hidden = true;
+      status.textContent = "This link doesn’t open a picture. On the picture, right-click and choose “Copy image address”.";
+      status.className = "small error";
+    };
+    img.src = url;
+  }, 400);
+}
+$("imageInput").addEventListener("input", checkImage);
+$("imageRemove").addEventListener("click", () => {
+  $("imageInput").value = "";
+  checkImage();
+  onEdit();
+});
 
 /* Vista previa en vivo: la página real del lector (reading.html?preview=1)
    dentro de un "celular". Cuando carga, nos avisa y le mandamos la lectura
@@ -894,7 +942,8 @@ window.addEventListener("message", (e) => {
       author: study.author,
       publishedAt: study.date,
       pdfUrl: null,
-      bodyHtml: study.bodyHtml
+      bodyHtml: study.bodyHtml,
+      image: study.image || ""
     }
   }, location.origin);
 });
@@ -962,6 +1011,11 @@ function checkFields() {
     editorProblem("Please write a title.");
     return false;
   }
+  if (imageProblem(study.image)) {
+    $("imageInput").focus();
+    editorProblem("Please check the picture link: " + imageProblem(study.image));
+    return false;
+  }
   if (authorPick() === "other" && !study.author) {
     $("authorOther").focus();
     editorProblem("Please write the name that goes on the study, or choose another option.");
@@ -977,6 +1031,7 @@ async function save(mode) {
   const data = {
     category: study.category, title: study.title, subtitle: study.subtitle,
     book: study.book, passage: study.passage, bodyHtml: study.bodyHtml, words: study.words,
+    image: study.image || "",
     sourceName: study.sourceName, author: study.author,
     updatedAt: serverTimestamp(), updatedBy: user.uid
   };

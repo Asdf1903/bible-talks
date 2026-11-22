@@ -38,10 +38,10 @@
     });
   }
 
-  // PRUEBA TEMPORAL: comparar el mosaico de estudios con ?tiles=strip o ?tiles=cap
+  // PRUEBA TEMPORAL: ver el mosaico de estudios con letra capital (?tiles=cap)
   // (ver site.css, "PRUEBA"). Quitar cuando se elija.
   var tiles = new URLSearchParams(location.search).get("tiles");
-  if (tiles === "strip" || tiles === "cap") document.body.classList.add("tiles-" + tiles);
+  if (tiles === "cap") document.body.classList.add("tiles-cap");
 
   var year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();

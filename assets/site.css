@@ -77,8 +77,10 @@ body.site::after {
     box-shadow: none;
     min-height: 100vh;
   }
+  /* En celular también va el filete, un poco más pegado a la orilla */
   .sheet::after {
-    display: none;
+    inset: 6px;
+    border-color: color-mix(in srgb, var(--gold) 45%, transparent);
   }
 }
 
@@ -1003,48 +1005,40 @@ a.slide:hover .slide-title {
   margin: 8px 0;
 }
 
-/* ---------- Celular: el encabezado (logo + menú + luna) enmarcado con el filete dorado ----------
-   En computadora el filete rodea toda la hoja (.sheet::after); en celular la hoja ocupa
-   la pantalla y ese filete se quita, así que aquí enmarca solo el encabezado. */
-@media (max-width: 760px) {
-  .site-head {
-    margin: 10px 10px 14px;
-    padding: 12px 12px;
-    border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
-    border-radius: 4px;
-  }
-}
-
-/* ---------- PRUEBA: dos ideas para darle "punch" al mosaico de estudios ----------
-   Se comparan con la dirección:  index.html?tiles=strip#good-news   o   ?tiles=cap
-   (site.js pone la clase en <body>). Cuando Isra y Jessica elijan, se deja una y se borra esto. */
-
-/* Idea 1: franja de grabado arriba, como el lomo de un libro */
-body.tiles-strip .study-tile {
-  position: relative;
+/* ---------- Mosaico de estudios: franja de color con el ícono de la sección ----------
+   Como el lomo de un libro: va arriba de cada estudio (home.js la pone: .study-band). */
+.study-tile {
   overflow: hidden;
+  border-top-width: 1px; /* la franja de color sustituye a la orilla gruesa */
 }
-body.tiles-strip .study-tile::before {
-  content: "";
+.study-band {
   align-self: stretch;
-  height: 48px;
+  display: grid;
+  place-items: center;
+  height: 44px;
   margin: -18px -16px 10px;
-  background: var(--sec-image, var(--bg-image)) center 28% / cover no-repeat;
-  filter: grayscale(1) sepia(0.35) contrast(1.25);
-  opacity: 0.6;
-  border-bottom: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  background: var(--c);
+  color: var(--paper);
+}
+.study-band svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 @media (max-width: 560px) {
-  body.tiles-strip .study-tile::before { height: 40px; margin: -14px -12px 8px; }
+  .study-band { height: 38px; margin: -14px -12px 8px; }
+  .study-band svg { width: 21px; height: 21px; }
 }
 
-/* Idea 3: letra capital grande en el color de la sección */
+/* ---------- PRUEBA: además, letra capital de color en el título ----------
+   Se ve con la dirección  index.html?tiles=cap#good-news  (site.js pone la clase en <body>).
+   Si se queda, quitar "body.tiles-cap" para que sea normal; si no, borrar esto y lo de site.js. */
 body.tiles-cap .study-tile h2::first-letter {
   font-size: 1.9em;
   line-height: 0.9;
   color: var(--c);
 }
-/* Cada mosaico enseña otro pedazo del grabado (para que no se vean todos iguales) */
-body.tiles-strip .study-tile:nth-child(4n+2)::before { background-position: 20% 55%; }
-body.tiles-strip .study-tile:nth-child(4n+3)::before { background-position: 80% 70%; }
-body.tiles-strip .study-tile:nth-child(4n+4)::before { background-position: 40% 90%; }

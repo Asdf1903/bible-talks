@@ -272,7 +272,10 @@ function studyTile(item) {
   const r = item.data;
   const a = el("a", "study-tile");
   a.href = readingLink(item.id);
-  a.append(el("h2", null, r.title || ""));
+  // Franja de arriba: el color de la sección con su ícono (como el lomo de un libro)
+  const band = el("span", "study-band");
+  band.innerHTML = sectionIcon(r.category); // dibujo fijo nuestro, no datos de afuera
+  a.append(band, el("h2", null, r.title || ""));
   if (r.subtitle) a.append(el("p", "study-sub", r.subtitle));
   const passage = [r.book, r.passage].filter(Boolean).join(" ");
   a.append(el("p", "meta-line", (passage ? passage + " · " : "") + readTime(r)));

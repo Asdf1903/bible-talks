@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 84">
+  <!-- Logo de Bible Talks: libro abierto que también es un globo de diálogo (sin cruz).
+       Se usa como ícono de la pestaña del navegador. Colores fijos (azul marino y dorado). -->
+  <path fill="#14305a" d="M4 22 L12 17 L12 62 C28 58 46 60 58 68 L58 72 C44 64 24 63 4 68 Z"/>
+  <path fill="#14305a" d="M116 22 L108 17 L108 62 C92 58 74 60 62 68 L62 72 C76 64 96 63 116 68 Z"/>
+  <path fill="#b8862b" d="M60 18 C52 9 34 6 18 8 L18 56 C34 54 50 57 60 66 Z"/>
+  <path fill="#b8862b" d="M60 18 C68 9 86 6 102 8 L102 56 C86 54 70 57 60 66 Z"/>
+  <path fill="#f5eedf" d="M57 21 C50 14 36 12 22 13 L22 52 C36 51 49 54 57 60 Z"/>
+  <path fill="#f5eedf" d="M63 21 C70 14 84 12 98 13 L98 52 C84 51 71 54 63 60 Z"/>
+  <path fill="none" stroke="#b8862b" stroke-width="2" stroke-linecap="round"
+        d="M28 23 C36 22.5 44 23.5 51 27 M28 31 C36 30.5 44 31.5 51 35 M28 39 C36 38.5 44 39.5 51 43 M28 47 C34 46.6 40 47.2 45 49
+           M92 23 C84 22.5 76 23.5 69 27 M92 31 C84 30.5 76 31.5 69 35 M92 39 C84 38.5 76 39.5 69 43 M92 47 C86 46.6 80 47.2 75 49"/>
+  <path fill="#b8862b" d="M55 63 C56 70 53 76 46 82 C57 81 63 75 65 64 Z"/>
+</svg>

@@ -1383,3 +1383,20 @@ textarea {
     font-size: 1rem;
   }
 }
+
+/* El librito (logo sin cruz) en la barra de arriba y en la entrada */
+.topbar .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-logo {
+  height: 30px;
+  width: auto;
+}
+.gate-logo {
+  display: block;
+  width: 96px;
+  height: auto;
+  margin: 0 auto 10px;
+}

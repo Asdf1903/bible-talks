@@ -4,6 +4,7 @@
    2. Las 4 secciones en mosaico (color + ícono + descripción)
    3. "Recent studies": los últimos publicados
    4. "Coming soon": lo que Neil ya programó (lista pública site/upcoming)
+   5. Cada sección (#good-news, etc.): en esta misma página, sin otro HTML
 
    LA CINTA se arma sola, sin que Neil haga nada:
      1. Verse of the week: cambia cada lunes (assets/verses.js)
@@ -218,7 +219,7 @@ function paintSections(items) {
   SECTIONS.forEach((s) => {
     const n = items.filter((x) => x.data.category === s.id).length;
     const a = el("a", "tile sec-" + s.id);
-    a.href = "category.html?c=" + s.id;
+    a.href = "#" + s.id;
     const icon = el("span", "tile-icon");
     icon.innerHTML = sectionIcon(s.id); // dibujo fijo nuestro, no datos de afuera
     a.append(icon, el("h3", null, s.name), el("p", null, s.about));
@@ -258,6 +259,60 @@ function paintUpcoming(items) {
   $("upcomingBlock").hidden = items.length === 0;
 }
 
+/* ---------- 5. Una sección (#good-news, etc.), en esta misma página ---------- */
+// Arriba: marco redondeado con el grabado de fondo (ícono, nombre, descripción).
+// Abajo: sus estudios en mosaico, del más nuevo al más viejo.
+
+let allStudies = null; // null = todavía cargando
+
+function studyTile(item) {
+  const r = item.data;
+  const a = el("a", "study-tile");
+  a.href = readingLink(item.id);
+  a.append(el("h2", null, r.title || ""));
+  if (r.subtitle) a.append(el("p", "study-sub", r.subtitle));
+  const passage = [r.book, r.passage].filter(Boolean).join(" ");
+  a.append(el("p", "meta-line", (passage ? passage + " · " : "") + readTime(r)));
+  return a;
+}
+
+function paintSectionView(s) {
+  document.body.classList.remove(...SECTIONS.map((x) => "sec-" + x.id));
+  document.body.classList.add("sec-" + s.id); // su color (--c) para toda la vista
+  $("catIcon").innerHTML = sectionIcon(s.id); // dibujo fijo nuestro, no datos de afuera
+  $("catTitle").textContent = s.name;
+  $("catAbout").textContent = s.about;
+
+  const grid = $("studyGrid");
+  grid.innerHTML = "";
+  if (allStudies === null) { $("catCount").textContent = "Loading…"; $("catEmpty").hidden = true; return; }
+  const items = allStudies.filter((x) => x.data.category === s.id);
+  items.forEach((x) => grid.appendChild(studyTile(x)));
+  $("catCount").textContent = items.length === 1 ? "1 study" : items.length ? items.length + " studies" : "";
+  $("catEmpty").hidden = items.length > 0;
+}
+
+// Qué se ve según lo que va después del # en la dirección
+function route() {
+  const s = SECTIONS.find((x) => "#" + x.id === location.hash);
+  $("homeView").hidden = !!s;
+  $("sectionView").hidden = !s;
+  document.title = s ? s.name + " · Bible Talks" : "Bible Talks · Studies by Neil Whatmough";
+  if (s) { paintSectionView(s); stopTimer(); } else { restart(); }
+
+  // Menú de arriba: marcar dónde estás y cerrarlo (en celular)
+  document.querySelectorAll(".site-nav a").forEach((a) => {
+    const href = a.getAttribute("href");
+    const here = s ? href === "#" + s.id : href === "#";
+    if (here) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+  });
+  document.body.classList.remove("nav-open");
+  const menuBtn = $("menuBtn");
+  if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+
 /* ---------- Cargar todo ---------- */
 
 async function getSiteDoc(name) {
@@ -273,12 +328,15 @@ async function getSiteDoc(name) {
 // Mientras carga: el versículo y las secciones ya se ven
 startRibbon([verseSlide()], []);
 paintSections([]);
+route();
 
 const [studies, home, upcomingDoc] = await Promise.all([getPublished(), getSiteDoc("home"), getSiteDoc("upcoming")]);
 const today = new Date().toISOString().slice(0, 10);
 const upcoming = ((upcomingDoc && upcomingDoc.items) || []).filter((u) => u.date > today);
 
+allStudies = studies;
 startRibbon(buildSlides(home, studies), studies);
 paintSections(studies);
 paintRecent(studies.slice(0, 6));
 paintUpcoming(upcoming);
+route(); // si se abrió directo en una sección, ahora ya con sus estudios

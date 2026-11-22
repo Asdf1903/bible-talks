@@ -1,6 +1,6 @@
 /* =========================================================
    studies.js: trae los estudios publicados de Firestore
-   Lo usan la portada (home.js) y la página de cada sección (category.js).
+   Lo usa home.js (la portada y las secciones, que viven en index.html).
    Usa el índice (status + publishAt) de firestore.indexes.json: si falta,
    Firestore da un error con un enlace para crearlo (sale en la consola).
    ========================================================= */

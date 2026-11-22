@@ -1,6 +1,6 @@
 /* =========================================================
    sections.js: las 4 secciones del sitio (los "cuartos de la casa")
-   Las usan la portada (home.js) y la página de cada sección (category.js).
+   Las usa home.js (portada y secciones, todo en index.html) y el panel.
    - about: la descripción que Neil aprobó (2026-11-21)
    - icon:  dibujo de líneas (SVG). Sin símbolos religiosos: a Neil no le gustan.
    - El color de cada una está en styles.css (--sec-good-news, etc.)

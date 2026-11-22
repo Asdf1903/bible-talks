@@ -61,7 +61,7 @@ window.BibleReader = { start: function (reading) {
 
     document.title = reading.title + " · Bible Talks";
     $("backLabel").textContent = category || "Back";
-    $("backLink").href = "category.html?c=" + reading.category;
+    $("backLink").href = "index.html#" + reading.category;
 
     var spoken = reading.title + ". " + (reading.subtitle ? reading.subtitle.replace(/·/g, ",") + ". " : "");
 
@@ -83,7 +83,7 @@ window.BibleReader = { start: function (reading) {
           (author === "Neil Whatmough" ? "Write to Neil" : "Write to us") + "</a></p>" +
         '<div class="end-actions">' +
           (reading.pdfUrl ? '<a class="btn" href="' + encodeURI(reading.pdfUrl) + '" download>Download PDF</a>' : "") +
-          '<a class="btn ghost" href="category.html?c=' + reading.category + '">More ' + escapeHtml(category) + "</a>" +
+          '<a class="btn ghost" href="index.html#' + reading.category + '">More ' + escapeHtml(category) + "</a>" +
         "</div>" +
         '<span id="endMark"></span>' +
       "</footer>";

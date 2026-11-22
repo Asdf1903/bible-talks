@@ -1,49 +1,34 @@
 /* =========================================================
    home.js: llena la portada desde Firestore
-   1. La cinta (banner): hasta 4 diapositivas que cambian solas
-   2. "Explore": las 4 secciones con cuántos estudios tiene cada una
+   1. La cinta (banner): 4 diapositivas que cambian solas
+   2. Las 4 secciones en mosaico (color + ícono + descripción)
    3. "Recent studies": los últimos publicados
    4. "Coming soon": lo que Neil ya programó (lista pública site/upcoming)
 
-   La cinta:
-   - Si existe el documento site/home (más adelante Neil lo arma desde su panel),
-     se usan sus diapositivas: { slides: [ ... ] } con estos tipos:
-       { kind: "verse",  text, ref, image? }          versículo del día/semana
-       { kind: "study",  id, kicker? }                 un estudio que Neil elige
-       { kind: "latest" }                              el estudio más nuevo
-       { kind: "season", kicker, title, text, image?, link? }   aviso de temporada
-   - Si no existe, se arma sola: versículo, lo más nuevo, uno recomendado
-     de la biblioteca y lo próximo programado.
+   LA CINTA se arma sola, sin que Neil haga nada:
+     1. Verse of the week: cambia cada lunes (assets/verses.js)
+     2. New: el estudio "nuevo". Si Neil sube varios de golpe, hacen FILA:
+        cada uno es "el nuevo" durante 3 días (sin contar domingo) y luego
+        pasa el siguiente. Cuando la fila se vacía, se queda el más reciente.
+     3 y 4. From the library: 2 estudios que cambian cada 3 días (sin contar
+        domingo). Van por turnos en un orden revuelto: cuando a uno ya le tocó,
+        se va al final de la fila. Nunca repite el que está de "New".
+   Todo se calcula con la fecha: cualquier persona ve lo mismo el mismo día,
+   y no hace falta guardar nada.
+
+   Si algún día existe el documento site/home con { slides: [...] }, se usan
+   esas diapositivas en lugar de las automáticas (para el futuro "Site pages").
    ========================================================= */
 import { db } from "./firebase.js";
-import {
-  collection, query, where, orderBy, limit, getDocs, getDoc, doc, Timestamp
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { SECTIONS, sectionName, sectionIcon } from "./sections.js";
+import { verseOfTheWeek } from "./verses.js";
+import { getPublished, readingLink, readTime } from "./studies.js";
 
-// Descripciones públicas de cada sección (BORRADOR: Neil las revisa)
-const SECTIONS = [
-  { id: "good-news",   name: "Good News",   about: "Stories from Neil’s life and the way to salvation." },
-  { id: "doctrine",    name: "Doctrine",    about: "How to live as a Christian." },
-  { id: "bible-study", name: "Bible Study", about: "The Bible explained, passage by passage." },
-  { id: "prophecy",    name: "Prophecy",    about: "Daniel, Isaiah, Ezekiel, Matthew 24, Revelation." }
-];
-const sectionName = (id) => (SECTIONS.find((s) => s.id === id) || {}).name || "";
-
-const DEFAULT_VERSE = {
-  kind: "verse",
-  text: "All scripture is given by inspiration of God, and is profitable for doctrine, for reproof, for correction, for instruction in righteousness.",
-  ref: "2 Timothy 3:16",
-  image: "assets/img/hero-bible.webp"
-};
+const SLIDE_SECONDS = 6; // cada cuánto cambia la cinta sola
+const TURN_DAYS = 3;     // cuántos días (sin contar domingo) dura cada turno
 
 const $ = (id) => document.getElementById(id);
-const link = (id) => "reading.html?id=" + encodeURIComponent(id);
-
-// ~200 palabras por minuto
-function readTime(r) {
-  const words = r.words || String(r.bodyHtml || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).length;
-  return Math.max(1, Math.round(words / 200)) + " min read";
-}
 
 // Crea un elemento con texto (sin innerHTML para los datos)
 function el(tag, cls, text) {
@@ -53,7 +38,59 @@ function el(tag, cls, text) {
   return e;
 }
 
+/* ---------- Turnos de la cinta ---------- */
+
+// Número de "días que cuentan" (lunes a sábado) desde un lunes cualquiera.
+// El domingo vale lo mismo que el sábado: así no avanza el turno.
+const EPOCH = Date.UTC(2026, 10, 23); // lunes 23 de noviembre de 2026
+function workday(dateLike) {
+  const d = new Date(dateLike);
+  const days = Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - EPOCH) / 864e5);
+  const weeks = Math.floor(days / 7);
+  return weeks * 6 + Math.min(days - weeks * 7, 5);
+}
+const publishedMs = (x) => (x.data.publishAt && x.data.publishAt.toMillis ? x.data.publishAt.toMillis() : 0);
+
+// Orden revuelto pero fijo para cada estudio (sale de su id): así "From the library"
+// parece al azar, pero todos ven lo mismo y cada estudio tiene su turno.
+function scramble(id) {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+function pickRibbonStudies(studies) {
+  if (!studies.length) return { fresh: null, library: [] };
+  const today = workday(Date.now());
+
+  // Fila de "nuevos", del más viejo al más nuevo
+  const asc = studies.slice().sort((p, q) => publishedMs(p) - publishedMs(q));
+  let end = -Infinity, fresh = null;
+  asc.forEach((x) => {
+    const start = Math.max(workday(publishedMs(x)), end);
+    end = start + TURN_DAYS;
+    if (today >= start && today < end) fresh = x;
+  });
+  if (!fresh) fresh = studies[0]; // fila vacía: el más reciente
+
+  // "From the library": todos menos el que está de "nuevo", en orden revuelto;
+  // cada turno toma los 2 siguientes de la fila (los que ya salieron quedan al final)
+  const pool = studies.filter((x) => x !== fresh);
+  pool.sort((p, q) => scramble(p.id) - scramble(q.id));
+  const turn = Math.floor(today / TURN_DAYS);
+  const library = [];
+  for (let k = 0; k < Math.min(2, pool.length); k++) {
+    library.push(pool[(((turn * 2 + k) % pool.length) + pool.length) % pool.length]);
+  }
+  return { fresh, library };
+}
+
 /* ---------- 1. La cinta ---------- */
+
+function verseSlide() {
+  const v = verseOfTheWeek();
+  return { kind: "verse", text: v.text, ref: v.ref, image: "assets/img/hero-bible.webp" };
+}
 
 function slideElement(s, studies) {
   let box, inner;
@@ -72,16 +109,15 @@ function slideElement(s, studies) {
     inner.append(el("p", "slide-kicker", s.kicker || ""), el("h2", "slide-title", s.title || ""));
     if (s.text) inner.append(el("p", "slide-sub", s.text));
   } else {
-    // Un estudio: el que eligió Neil ("study"), el más nuevo ("latest") o uno recomendado
-    const item = s.kind === "latest" ? studies[0] : s.item || studies.find((x) => x.id === s.id);
+    // Un estudio (ya elegido en s.item, o por id si viene de site/home)
+    const item = s.item || studies.find((x) => x.id === s.id);
     if (!item) return null;
     const r = item.data;
-    box = el("a", "slide");
-    box.href = link(item.id);
+    box = el("a", "slide sec-" + r.category);
+    box.href = readingLink(item.id);
     s.image = s.image || r.image || null;
     wrapText();
-    const kicker = s.kicker || (s.kind === "latest" ? "New this week" : "Recommended");
-    inner.append(el("p", "slide-kicker", kicker + " · " + sectionName(r.category)),
+    inner.append(el("p", "slide-kicker", (s.kicker || "From the library") + " · " + sectionName(r.category)),
                  el("h2", "slide-title", r.title));
     if (r.subtitle) inner.append(el("p", "slide-sub", r.subtitle));
     inner.append(el("p", "meta-line", readTime(r)),
@@ -97,27 +133,12 @@ function slideElement(s, studies) {
   return box;
 }
 
-function buildSlides(config, studies, upcoming) {
+function buildSlides(config, studies) {
   if (config && Array.isArray(config.slides) && config.slides.length) return config.slides.slice(0, 4);
-
-  // Automática (mientras Neil no la arme)
-  const slides = [DEFAULT_VERSE];
-  if (studies[0]) slides.push({ kind: "latest" });
-  if (studies.length > 1) {
-    // Recomendado: uno de la biblioteca (cambia cada semana, no en cada visita)
-    const week = Math.floor(Date.now() / (7 * 24 * 3600 * 1000));
-    const pool = studies.slice(1);
-    slides.push({ kind: "study", item: pool[week % pool.length], kicker: "From the library" });
-  }
-  if (upcoming[0]) {
-    const u = upcoming[0];
-    slides.push({
-      kind: "season",
-      kicker: "Coming soon · " + new Date(u.date + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric" }),
-      title: u.title,
-      text: sectionName(u.category)
-    });
-  }
+  const { fresh, library } = pickRibbonStudies(studies);
+  const slides = [verseSlide()];
+  if (fresh) slides.push({ kind: "study", item: fresh, kicker: "New" });
+  library.forEach((item) => slides.push({ kind: "study", item, kicker: "From the library" }));
   return slides;
 }
 
@@ -129,7 +150,7 @@ function stopTimer() { clearInterval(timer); }
 function restart() {
   clearInterval(timer);
   const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (ribbon && ribbon.count > 1 && !calm) timer = setInterval(() => ribbon.go(ribbon.current + 1), 7000);
+  if (ribbon && ribbon.count > 1 && !calm) timer = setInterval(() => ribbon.go(ribbon.current + 1), SLIDE_SECONDS * 1000);
 }
 (function bindRibbonControls() {
   const box = $("ribbon");
@@ -186,24 +207,27 @@ function startRibbon(slides, studies) {
   } };
   ribbon = api;
   api.go(0);
-  restart(); // cambia sola cada 7 segundos (nunca si la persona pidió "menos movimiento")
+  restart(); // cambia sola (nunca si la persona pidió "menos movimiento")
 }
 
-/* ---------- 2-4. Secciones, recientes, próximos ---------- */
+/* ---------- 2. Las 4 secciones en mosaico ---------- */
 
 function paintSections(items) {
   const grid = $("sections");
   grid.innerHTML = "";
   SECTIONS.forEach((s) => {
     const n = items.filter((x) => x.data.category === s.id).length;
-    const a = el("a", "section-link");
+    const a = el("a", "tile sec-" + s.id);
     a.href = "category.html?c=" + s.id;
-    const h = el("h3", null, s.name);
-    h.appendChild(el("small", null, n ? String(n) : ""));
-    a.append(h, el("p", null, s.about));
+    const icon = el("span", "tile-icon");
+    icon.innerHTML = sectionIcon(s.id); // dibujo fijo nuestro, no datos de afuera
+    a.append(icon, el("h3", null, s.name), el("p", null, s.about));
+    if (n) a.append(el("span", "tile-count", n === 1 ? "1 study" : n + " studies"));
     grid.appendChild(a);
   });
 }
+
+/* ---------- 3-4. Recientes y próximos ---------- */
 
 function paintRecent(items) {
   const list = $("recent");
@@ -211,7 +235,7 @@ function paintRecent(items) {
   items.forEach((item) => {
     const r = item.data;
     const a = el("a", "recent-item");
-    a.href = link(item.id);
+    a.href = readingLink(item.id);
     a.append(el("span", "label", sectionName(r.category)), el("h3", null, r.title),
              el("span", "meta-line", readTime(r)));
     list.appendChild(a);
@@ -236,44 +260,25 @@ function paintUpcoming(items) {
 
 /* ---------- Cargar todo ---------- */
 
-async function getStudies() {
-  try {
-    // Un par de minutos antes de "ahora", para que la hora del celular nunca vaya
-    // adelantada respecto al servidor (si no, las reglas rechazan la consulta).
-    const cutoff = Timestamp.fromMillis(Date.now() - 2 * 60 * 1000);
-    const snap = await getDocs(query(
-      collection(db, "readings"),
-      where("status", "==", "published"),
-      where("publishAt", "<=", cutoff),
-      orderBy("publishAt", "desc"),
-      limit(200)
-    ));
-    return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
-  } catch (e) {
-    console.error("readings:", e); // la primera vez Firestore pide crear un índice (el error trae el enlace)
-    return [];
-  }
-}
-
 async function getSiteDoc(name) {
   try {
     const snap = await getDoc(doc(db, "site", name));
     return snap.exists() ? snap.data() : null;
   } catch (e) {
-    console.error("site/" + name + ":", e); // faltan las reglas nuevas en Firestore
+    console.error("site/" + name + ":", e);
     return null;
   }
 }
 
 // Mientras carga: el versículo y las secciones ya se ven
-startRibbon([DEFAULT_VERSE], []);
+startRibbon([verseSlide()], []);
 paintSections([]);
 
-const [studies, home, upcomingDoc] = await Promise.all([getStudies(), getSiteDoc("home"), getSiteDoc("upcoming")]);
+const [studies, home, upcomingDoc] = await Promise.all([getPublished(), getSiteDoc("home"), getSiteDoc("upcoming")]);
 const today = new Date().toISOString().slice(0, 10);
 const upcoming = ((upcomingDoc && upcomingDoc.items) || []).filter((u) => u.date > today);
 
-startRibbon(buildSlides(home, studies, upcoming), studies);
+startRibbon(buildSlides(home, studies), studies);
 paintSections(studies);
 paintRecent(studies.slice(0, 6));
 paintUpcoming(upcoming);

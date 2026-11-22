@@ -18,6 +18,12 @@
   --highlight: #f1dca0;    /* párrafo que se está leyendo en voz alta */
   --shadow: 0 10px 40px rgba(20, 30, 50, 0.18);
 
+  /* Color de cada sección (panel y sitio público) */
+  --sec-good-news: #b8862b;   /* dorado */
+  --sec-doctrine: #14305a;    /* azul marino */
+  --sec-bible-study: #b0612a; /* café-naranja */
+  --sec-prophecy: #7a2e48;    /* vino */
+
   --font-body: "Literata", Georgia, "Times New Roman", serif;
   --font-title: "Cinzel", "Trajan Pro", Georgia, serif;
   --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -37,6 +43,10 @@
     --rule: #3a332b;
     --highlight: #4a3b1f;
     --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    --sec-good-news: #d9a95b;
+    --sec-doctrine: #8fb0e0;
+    --sec-bible-study: #e08a4f;
+    --sec-prophecy: #d68aa8;
   }
 }
 
@@ -53,6 +63,10 @@
   --rule: #3a332b;
   --highlight: #4a3b1f;
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  --sec-good-news: #d9a95b;
+  --sec-doctrine: #8fb0e0;
+  --sec-bible-study: #e08a4f;
+  --sec-prophecy: #d68aa8;
 }
 
 *,
@@ -105,3 +119,9 @@ button {
     animation: none !important;
   }
 }
+
+/* Cada sección "trae" su color en --c (botones, carpetas, mosaico, cápsulas) */
+.sec-good-news   { --c: var(--sec-good-news); }
+.sec-doctrine    { --c: var(--sec-doctrine); }
+.sec-bible-study { --c: var(--sec-bible-study); }
+.sec-prophecy    { --c: var(--sec-prophecy); }

@@ -13,11 +13,6 @@ body.admin {
   --blue: #1d4ed8;
   --red: #b91c1c;
   --gray: #6b7280;
-  /* Color de cada sección (sale de la paleta del sitio; vino para Prophecy) */
-  --sec-good-news: #b8862b;   /* dorado */
-  --sec-doctrine: #14305a;    /* azul marino */
-  --sec-bible-study: #b0612a; /* café-naranja */
-  --sec-prophecy: #7a2e48;    /* vino */
   --sidebar-w: 248px;
   --topbar-h: 60px;
 
@@ -33,10 +28,6 @@ body.admin {
     --blue: #93c5fd;
     --red: #f87171;
     --gray: #9ca3af;
-    --sec-good-news: #d9a95b;
-    --sec-doctrine: #8fb0e0;
-    --sec-bible-study: #e08a4f;
-    --sec-prophecy: #d68aa8;
   }
 }
 
@@ -47,10 +38,6 @@ body.admin {
   --blue: #93c5fd;
   --red: #f87171;
   --gray: #9ca3af;
-  --sec-good-news: #d9a95b;
-  --sec-doctrine: #8fb0e0;
-  --sec-bible-study: #e08a4f;
-  --sec-prophecy: #d68aa8;
 }
 
 /* Botón de tema: en oscuro se ve el sol (para pasar a claro); en claro, la luna */
@@ -978,11 +965,7 @@ textarea:focus {
   border-color: #b45309;
 }
 
-/* Color de cada sección: en los botones, las carpetas y los puntitos de la lista */
-.sec-good-news   { --c: var(--sec-good-news); }
-.sec-doctrine    { --c: var(--sec-doctrine); }
-.sec-bible-study { --c: var(--sec-bible-study); }
-.sec-prophecy    { --c: var(--sec-prophecy); }
+/* Color de cada sección: --c viene de styles.css (.sec-good-news, etc.) */
 .sec-dot {
   display: inline-block;
   width: 12px;

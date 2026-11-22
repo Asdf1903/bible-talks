@@ -9,6 +9,7 @@
      6. Editor, paso 2: datos a la izquierda + vista previa en vivo a la derecha
      7. Guardar, publicar, quitar del sitio, papelera, historial
      8. Messages: lo que la gente manda desde Contact
+     9. Site pages: la cinta de la portada (qué se ve, qué sigue, ajustes)
    Los datos se guardan en Firestore, colección `readings`.
    ========================================================= */
 import { auth, db, ENV } from "../assets/firebase.js";
@@ -19,6 +20,8 @@ import {
   doc, getDoc, setDoc, updateDoc, addDoc, collection, query, orderBy, limit, getDocs,
   serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { planSlides, upcomingChanges, upcomingVerses, verseList, safeLink } from "../assets/ribbon.js";
+import { VERSES } from "../assets/verses.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -197,7 +200,7 @@ onAuthStateChanged(auth, async (u) => {
 // La dirección dice qué cuarto se ve:
 //   #home · #studies (= On the website) · #studies/<pestaña> (4 carpetas)
 //   #studies/<pestaña>/<sección o all> (dentro de una carpeta)
-//   #bin · #messages · #messages/archived
+//   #bin · #messages · #messages/archived · #site (Site pages)
 //   #study/<id> (un estudio) · #new (el que se acaba de subir, aún sin guardar)
 
 let currentHash = "";
@@ -227,6 +230,10 @@ async function route() {
   } else if (room === "bin") {
     showView("bin");
     paintBin();
+  } else if (room === "site") {
+    showView("site");
+    await loadSiteConfig(); // lo que Neil haya guardado (versículos, estudio fijo, aviso)
+    paintSite();
   } else if (room === "messages") {
     msgTab = arg === "archived" ? "archived" : "inbox";
     showView("messages");
@@ -1213,3 +1220,198 @@ function paintMessages() {
   $("msgEmpty").textContent = msgTab === "archived" ? "Nothing archived."
     : "No messages yet. When someone writes from the Contact page of the website, it appears here.";
 }
+
+/* ---------- 9. Site pages: la cinta de la portada ----------
+   Enseña qué se ve hoy y qué sigue (con las MISMAS reglas que la portada:
+   assets/ribbon.js) y deja cambiar 3 cosas, guardadas en Firestore site/home:
+     verses   → lista propia de versículos (null = la estándar de verses.js)
+     pinnedId → un estudio fijo, primero en la cinta (null = ninguno)
+     season   → aviso de temporada { on, kicker, title, text, link } */
+
+let siteConfig = {};     // lo que hay en site/home
+let verseDraft = [];     // la lista mientras Neil la edita
+
+const fmtDay = (d) => d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+const publishedNewestFirst = () => allStudies.filter((x) => x.st.key === "published")
+  .sort((p, q) => millis(q.data.publishAt) - millis(p.data.publishAt));
+
+async function loadSiteConfig() {
+  try {
+    const snap = await getDoc(doc(db, "site", "home"));
+    siteConfig = snap.exists() ? snap.data() : {};
+  } catch (e) {
+    console.error("site/home:", e);
+    siteConfig = {};
+  }
+}
+
+async function saveSiteConfig(changes, okText) {
+  try {
+    await setDoc(doc(db, "site", "home"), Object.assign({}, changes, { updatedAt: serverTimestamp() }), { merge: true });
+    Object.assign(siteConfig, changes);
+    toast(okText);
+    paintSite();
+    return true;
+  } catch (e) {
+    console.error(e);
+    toast("It couldn’t be saved. Please try again.");
+    return false;
+  }
+}
+
+function li(parent, label, title, note) {
+  const item = document.createElement("li");
+  const b = document.createElement("span");
+  b.className = "slide-label";
+  b.textContent = label;
+  const t = document.createElement("strong");
+  t.textContent = title;
+  item.append(b, t);
+  if (note) {
+    const n = document.createElement("span");
+    n.className = "muted small";
+    n.textContent = note;
+    item.append(n);
+  }
+  parent.appendChild(item);
+}
+
+function paintSite() {
+  const studies = publishedNewestFirst();
+  const changes = upcomingChanges(studies, siteConfig, 5);
+  const nextChange = changes[1] ? "until " + fmtDay(new Date(changes[1].date.getTime() - 864e5)) : "";
+  const verses = upcomingVerses(siteConfig, 5);
+  const verseUntil = "until Sunday, " + new Date(verses[1].monday.getTime() - 864e5)
+    .toLocaleDateString("en-US", { month: "long", day: "numeric" });
+
+  // Hoy, en el orden de la cinta
+  const now = $("siteNow");
+  now.innerHTML = "";
+  planSlides(studies, siteConfig).forEach((s) => {
+    if (s.role === "pinned") li(now, "Kept on the banner", s.item.data.title, "Always, until you take it off");
+    else if (s.role === "verse") li(now, "Verse of the week", s.ref, verseUntil);
+    else if (s.role === "new") li(now, "New", s.item.data.title, nextChange);
+    else if (s.role === "library") li(now, "From the library", s.item.data.title, nextChange);
+    else if (s.role === "season") li(now, "Seasonal message", s.title, "While it is turned on");
+  });
+
+  // Lo que sigue
+  const next = $("siteNext");
+  next.innerHTML = "";
+  changes.slice(1).forEach((c) => {
+    const parts = [];
+    if (c.fresh) parts.push("New: " + c.fresh.data.title);
+    if (c.library.length) parts.push("From the library: " + c.library.map((x) => x.data.title).join(", "));
+    li(next, fmtDay(c.date), parts.join(" · "));
+  });
+  if (!changes.slice(1).length) li(next, "", "Nothing changes for now.");
+
+  // Versículos
+  const custom = Array.isArray(siteConfig.verses) && siteConfig.verses.length;
+  $("verseSource").textContent = custom
+    ? "Your own list (" + siteConfig.verses.length + " verses). It changes every Monday."
+    : "The standard list (" + VERSES.length + " verses, King James Version). It changes every Monday.";
+  const vl = $("siteVerses");
+  vl.innerHTML = "";
+  verses.forEach((v, i) => li(vl, i === 0 ? "This week" : "From " + fmtDay(v.monday), v.verse.ref, v.verse.text));
+  $("resetVersesBtn").hidden = !custom;
+
+  // Estudio fijo
+  const sel = $("pinSelect");
+  sel.innerHTML = "";
+  const none = document.createElement("option");
+  none.value = "";
+  none.textContent = "None (the banner chooses by itself)";
+  sel.appendChild(none);
+  studies.forEach((x) => {
+    const o = document.createElement("option");
+    o.value = x.id;
+    o.textContent = x.data.title + " · " + catName(x.data.category);
+    sel.appendChild(o);
+  });
+  sel.value = studies.some((x) => x.id === siteConfig.pinnedId) ? siteConfig.pinnedId : "";
+
+  // Aviso de temporada
+  const s = siteConfig.season || {};
+  $("seasonOn").checked = !!s.on;
+  $("seasonKicker").value = s.kicker || "";
+  $("seasonTitle").value = s.title || "";
+  $("seasonText").value = s.text || "";
+  $("seasonLink").value = s.link || "";
+}
+
+/* Editor de versículos */
+function paintVerseRows() {
+  const box = $("verseRows");
+  box.innerHTML = "";
+  const thisWeek = upcomingVerses({ verses: verseDraft }, 1)[0].verse;
+  verseDraft.forEach((v, i) => {
+    const row = document.createElement("div");
+    row.className = "verse-row" + (v === thisWeek ? " this-week" : "");
+    row.innerHTML = '<span class="verse-num"></span><div class="verse-fields">' +
+      '<input type="text" class="verse-ref" placeholder="Reference, e.g. John 3:16" maxlength="60">' +
+      '<textarea class="verse-text" rows="2" placeholder="The verse" maxlength="600"></textarea></div>' +
+      '<button class="icon-btn" aria-label="Remove this verse" title="Remove">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+    row.querySelector(".verse-num").textContent = v === thisWeek ? (i + 1) + " · this week" : String(i + 1);
+    const ref = row.querySelector(".verse-ref"), text = row.querySelector(".verse-text");
+    ref.value = v.ref || "";
+    text.value = v.text || "";
+    ref.addEventListener("input", () => { v.ref = ref.value; });
+    text.addEventListener("input", () => { v.text = text.value; });
+    row.querySelector("button").addEventListener("click", () => { verseDraft.splice(i, 1); paintVerseRows(); });
+    box.appendChild(row);
+  });
+}
+
+$("editVersesBtn").addEventListener("click", () => {
+  verseDraft = verseList(siteConfig).map((v) => ({ ref: v.ref, text: v.text }));
+  paintVerseRows();
+  $("verseEditor").hidden = false;
+  $("editVersesBtn").hidden = true;
+});
+$("addVerseBtn").addEventListener("click", () => {
+  verseDraft.push({ ref: "", text: "" });
+  paintVerseRows();
+  const refs = document.querySelectorAll(".verse-ref");
+  refs[refs.length - 1].focus();
+});
+function closeVerseEditor() {
+  $("verseEditor").hidden = true;
+  $("editVersesBtn").hidden = false;
+}
+$("cancelVersesBtn").addEventListener("click", closeVerseEditor);
+$("saveVersesBtn").addEventListener("click", async () => {
+  const list = verseDraft.map((v) => ({ ref: (v.ref || "").trim(), text: (v.text || "").trim() }))
+    .filter((v) => v.ref || v.text);
+  if (!list.length || list.some((v) => !v.ref || !v.text)) {
+    toast("Each verse needs its reference and its text.");
+    return;
+  }
+  if (await saveSiteConfig({ verses: list }, "Verses saved.")) closeVerseEditor();
+});
+$("resetVersesBtn").addEventListener("click", async () => {
+  if (!confirm("Go back to the standard list of " + VERSES.length + " verses? Your own list will be removed.")) return;
+  if (await saveSiteConfig({ verses: null }, "Back to the standard list.")) closeVerseEditor();
+});
+
+$("savePinBtn").addEventListener("click", () => {
+  const id = $("pinSelect").value || null;
+  saveSiteConfig({ pinnedId: id }, id ? "That study will stay on the banner." : "No study is kept on the banner now.");
+});
+
+$("saveSeasonBtn").addEventListener("click", () => {
+  const season = {
+    on: $("seasonOn").checked,
+    kicker: $("seasonKicker").value.trim(),
+    title: $("seasonTitle").value.trim(),
+    text: $("seasonText").value.trim(),
+    link: $("seasonLink").value.trim()
+  };
+  if (season.on && !season.title) { toast("Please write a title for the seasonal message."); return; }
+  if (season.link && !safeLink(season.link)) {
+    toast("The link must start with https:// (or be a page of this website).");
+    return;
+  }
+  saveSiteConfig({ season }, season.on ? "The seasonal message is on the banner." : "Seasonal message saved (turned off).");
+});

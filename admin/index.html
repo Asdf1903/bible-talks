@@ -112,11 +112,11 @@
         Messages <span class="nav-badge" id="navMsgCount" hidden></span>
       </a>
 
-      <!-- Todavía no funciona: se ve, pero no se puede picar -->
-      <span class="nav-item soon" aria-disabled="true" title="Coming soon">
+      <!-- La cinta de la portada: qué se ve, qué sigue, y los ajustes de Neil -->
+      <a class="nav-item" href="#site" data-nav="site">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM14 3v5h5"/></svg>
-        Site pages <span class="soon-tag">Soon</span>
-      </span>
+        Site pages
+      </a>
 
       <div class="nav-bottom">
         <span class="nav-item soon" aria-disabled="true" title="Coming soon">
@@ -214,6 +214,89 @@
         </div>
         <div class="msg-list" id="msgList"></div>
         <p class="empty" id="msgEmpty" hidden></p>
+      </section>
+
+      <!-- ===== Site pages: la cinta de la portada =====
+           Muestra qué se ve hoy y qué sigue (reglas en assets/ribbon.js),
+           y deja cambiar: versículos, un estudio fijo y un aviso de temporada.
+           Todo se guarda en Firestore, site/home. -->
+      <section class="view" id="view-site" hidden>
+        <div class="view-head">
+          <h1>Home page banner</h1>
+        </div>
+        <p class="muted site-intro">The banner at the top of the home page changes by itself every few seconds.
+          It runs on its own: you don’t need to do anything here. These are just the controls, if you ever want them.</p>
+
+        <div class="site-grid">
+          <!-- Hoy -->
+          <div class="card">
+            <h2 class="card-title">Showing today</h2>
+            <ol class="slide-list" id="siteNow"></ol>
+          </div>
+
+          <!-- Lo que sigue -->
+          <div class="card">
+            <h2 class="card-title">Coming next</h2>
+            <p class="muted small">Each study is “New” for 3 days, one after the other. The two “From the library”
+              change every 3 days. Sundays don’t count.</p>
+            <ol class="next-list" id="siteNext"></ol>
+          </div>
+
+          <!-- Versículos -->
+          <div class="card">
+            <h2 class="card-title">Verse of the week</h2>
+            <p class="muted small" id="verseSource"></p>
+            <ol class="next-list" id="siteVerses"></ol>
+            <button class="btn small" id="editVersesBtn">Change or add verses</button>
+            <div class="verse-editor" id="verseEditor" hidden>
+              <p class="muted small">One verse per week, in this order. When the list ends, it starts again.</p>
+              <div id="verseRows"></div>
+              <div class="row-actions">
+                <button class="btn small" id="addVerseBtn">+ Add a verse</button>
+              </div>
+              <div class="row-actions">
+                <button class="btn primary" id="saveVersesBtn">Save the verses</button>
+                <button class="btn" id="cancelVersesBtn">Cancel</button>
+                <button class="link-btn" id="resetVersesBtn">Go back to the standard list</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estudio fijo -->
+          <div class="card">
+            <h2 class="card-title">Keep a study on the banner</h2>
+            <p class="muted small">It shows first, every day, until you take it off. It uses the place of one “From the library”.</p>
+            <label class="field">
+              <span>Study</span>
+              <select id="pinSelect"></select>
+            </label>
+            <button class="btn primary" id="savePinBtn">Save</button>
+          </div>
+
+          <!-- Aviso de temporada -->
+          <div class="card">
+            <h2 class="card-title">Seasonal message</h2>
+            <p class="muted small">An extra slide for a special time, like Christmas or Easter. Turn it off when the season is over.</p>
+            <label class="choice"><input type="checkbox" id="seasonOn"> Show it on the banner</label>
+            <label class="field">
+              <span>Small label on top <em>(e.g. Christmas)</em></span>
+              <input type="text" id="seasonKicker" maxlength="40" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Title</span>
+              <input type="text" id="seasonTitle" maxlength="90" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Text <em>(optional)</em></span>
+              <textarea id="seasonText" rows="3" maxlength="300"></textarea>
+            </label>
+            <label class="field">
+              <span>Link <em>(optional: a study or a web page)</em></span>
+              <input type="text" id="seasonLink" placeholder="https://…" autocomplete="off">
+            </label>
+            <button class="btn primary" id="saveSeasonBtn">Save</button>
+          </div>
+        </div>
       </section>
 
       <!-- ===== Bin ===== -->

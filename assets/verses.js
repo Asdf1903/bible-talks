@@ -3,7 +3,8 @@
    52 versículos (uno por semana del año), de la King James Version,
    la que cita Neil. Es de dominio público.
    Cada lunes cambia solo al siguiente; al terminar la lista, vuelve a empezar.
-   Para agregar o cambiar uno: editar esta lista (texto + referencia).
+   Para agregar o cambiar uno: editar esta lista, o desde el panel (Site pages),
+   donde Neil puede guardar su propia lista (va a Firestore, site/home).
    ========================================================= */
 
 export const VERSES = [
@@ -61,9 +62,10 @@ export const VERSES = [
   { ref: "Psalm 90:12", text: "So teach us to number our days, that we may apply our hearts unto wisdom." }
 ];
 
-// El de esta semana: cambia cada lunes (semanas contadas desde el lunes 5 de enero de 1970)
-export function verseOfTheWeek(now = new Date()) {
+// El de esta semana: cambia cada lunes (semanas contadas desde el lunes 5 de enero de 1970).
+// `list` = la lista estándar, o la lista propia que Neil guarde en Site pages.
+export function verseOfTheWeek(now = new Date(), list = VERSES) {
   const day = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 864e5;
   const week = Math.floor((day - 4) / 7); // el día 4 (5-ene-1970) fue lunes
-  return VERSES[((week % VERSES.length) + VERSES.length) % VERSES.length];
+  return list[((week % list.length) + list.length) % list.length];
 }

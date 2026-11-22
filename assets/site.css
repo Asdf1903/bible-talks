@@ -1034,10 +1034,8 @@ a.slide:hover .slide-title {
   .study-band svg { width: 21px; height: 21px; }
 }
 
-/* ---------- PRUEBA: además, letra capital de color en el título ----------
-   Se ve con la dirección  index.html?tiles=cap#good-news  (site.js pone la clase en <body>).
-   Si se queda, quitar "body.tiles-cap" para que sea normal; si no, borrar esto y lo de site.js. */
-body.tiles-cap .study-tile h2::first-letter {
+/* Letra capital de color en el título de cada estudio (como un libro antiguo) */
+.study-tile h2::first-letter {
   font-size: 1.9em;
   line-height: 0.9;
   color: var(--c);

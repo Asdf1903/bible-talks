@@ -234,6 +234,19 @@ body.is-light .round-btn .i-moon { display: block; }
 @media (max-width: 420px) {
   .logo svg { width: 46px; }
   .logo-word { font-size: 1.3rem; }
+  /* Celular: luna + QR + compartir junto al logo completo, sin salirse de la pantalla */
+  .logo { gap: 8px; }
+  .site-head { gap: 8px; }
+  .head-tools { gap: 2px; }
+  .round-btn { width: 38px; height: 38px; }
+  .round-btn svg { width: 18px; height: 18px; }
+}
+/* Celulares muy chicos (320-350 px): logo un poco más chico */
+@media (max-width: 350px) {
+  .logo svg { width: 38px; }
+  .logo { gap: 6px; }
+  .logo-word { font-size: 1.1rem; }
+  .round-btn { width: 36px; height: 36px; }
 }
 
 /* ---------- Secciones de la portada ---------- */
@@ -1079,25 +1092,5 @@ a.slide:hover .slide-title {
   }
 }
 
-/* Aviso "Link copied" del botón de compartir */
-.share-toast {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  z-index: 80;
-  max-width: calc(100vw - 32px);
-  padding: 12px 20px;
-  border-radius: 10px;
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--font-ui);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
-  transform: translate(-50%, 20px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s, transform 0.25s;
-}
-.share-toast.on {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
+/* El aviso "Link copied" y la ventana del QR están en assets/share.css
+   (los usan también los estudios, que no cargan este archivo). */

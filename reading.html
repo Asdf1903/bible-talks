@@ -13,6 +13,7 @@
   <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="assets/reader.css">
+  <link rel="stylesheet" href="assets/share.css">
 
   <!-- Aplica el modo nocturno guardado antes de pintar (evita un destello blanco) -->
   <script>
@@ -31,6 +32,10 @@
       <button class="tool-btn" id="fontDown" aria-label="Smaller text">A−</button>
       <button class="tool-btn" id="fontUp" aria-label="Bigger text">A+</button>
       <button class="tool-btn" id="themeBtn" aria-label="Night mode"></button>
+      <!-- Código QR de este estudio (qr.js): la otra persona lo lee con su cámara -->
+      <button class="tool-btn" id="qrBtn" data-qr aria-label="Show a QR code of this study" title="QR code">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>
+      </button>
       <!-- Compartir este estudio (share.js) -->
       <button class="tool-btn" id="shareBtn" data-share aria-label="Share this study" title="Share">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10H6v10h12V10h-2M12 3v11M8.5 6.5L12 3l3.5 3.5"/></svg>
@@ -61,6 +66,9 @@
   <script src="assets/sample-reading.js"></script>
   <script src="assets/reader.js"></script>
   <script src="assets/share.js"></script>
+  <!-- QR: la librería que dibuja el código, y el botón que lo muestra -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <script src="assets/qr.js"></script>
   <script type="module" src="assets/reading-loader.js"></script>
 </body>
 </html>

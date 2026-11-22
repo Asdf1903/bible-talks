@@ -107,11 +107,19 @@ body.reader {
   }
 }
 
-/* En pantallas muy angostas, el botón de escuchar muestra solo el ícono */
-@media (max-width: 340px) {
+/* En celulares, el botón de escuchar muestra solo el ícono (▶ en el botón azul):
+   así caben también los botones de QR y compartir */
+@media (max-width: 440px) {
   .listen-label {
     display: none;
   }
+}
+/* Celulares muy chicos (320-350 px): botones un poco más angostos */
+@media (max-width: 350px) {
+  .reader-bar { gap: 4px; padding-left: 8px; padding-right: 8px; }
+  .tools { gap: 3px; }
+  .tool-btn { min-width: 38px; padding: 0 6px; }
+  .back { min-width: 38px; }
 }
 
 /* ---------- 2. Barra de progreso ---------- */

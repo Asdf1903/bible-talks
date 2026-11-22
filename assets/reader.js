@@ -101,6 +101,7 @@ window.BibleReader = { start: function (reading) {
     if (isPreview) {
       $("backLink").style.visibility = "hidden";
       $("shareBtn").style.display = "none"; // compartir no tiene sentido en la vista previa
+      $("qrBtn").style.display = "none";    // ni el QR
       var endActions = pagesEl.querySelector(".end-actions");
       if (endActions) endActions.remove();
       pagesEl.querySelectorAll(".end-card a").forEach(function (a) {

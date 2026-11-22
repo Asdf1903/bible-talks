@@ -1,0 +1,109 @@
+/* =========================================================
+   share.css: lo que comparten la portada (index.html) y los estudios (reading.html)
+   para COMPARTIR:
+     1. El aviso "Link copied" (share.js)
+     2. La ventana del código QR (qr.js)
+   ========================================================= */
+
+/* ---------- 1. Aviso "Link copied" ---------- */
+.share-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 80;
+  max-width: calc(100vw - 32px);
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-ui);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.share-toast.on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- 2. Ventana del QR ---------- */
+.qr-sheet {
+  width: min(400px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 22px 22px 18px;
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--gold);
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  text-align: center;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+}
+.qr-sheet::backdrop {
+  background: rgba(10, 8, 6, 0.72);
+}
+
+.qr-brand {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+.qr-title {
+  margin: 4px 0 0;
+  font-size: 16px;
+  color: var(--ink-soft, var(--ink));
+}
+
+/* El código: SIEMPRE blanco con negro y con margen blanco alrededor
+   (las cámaras necesitan ese "silencio" para encontrarlo) */
+.qr-code {
+  width: min(300px, 100%);
+  margin: 16px auto 14px;
+  padding: 18px;
+  border-radius: 12px;
+  background: #fff;
+  box-sizing: border-box;
+}
+.qr-code svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.qr-code svg path,
+.qr-code svg rect[fill="black"] {
+  fill: #000;
+}
+
+.qr-hint {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.qr-url {
+  margin: 6px 0 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gold);
+  word-break: break-all;
+}
+.qr-close {
+  min-width: 140px;
+  min-height: 46px;
+  padding: 0 22px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  cursor: pointer;
+}
+.qr-close:hover {
+  border-color: var(--gold);
+}

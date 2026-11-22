@@ -262,6 +262,9 @@ function route() {
     else a.removeAttribute("aria-current");
   });
   document.body.classList.remove("nav-open");
+  // En celular: logo completo solo en la portada; fuera de ella, las letras se meten al libro
+  // y aparece el menú ☰ (ver site.css, "Celular: logo completo…")
+  document.body.classList.toggle("at-home", !(s || page));
   const menuBtn = $("menuBtn");
   if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
   window.scrollTo(0, 0);

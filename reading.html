@@ -31,6 +31,10 @@
       <button class="tool-btn" id="fontDown" aria-label="Smaller text">A−</button>
       <button class="tool-btn" id="fontUp" aria-label="Bigger text">A+</button>
       <button class="tool-btn" id="themeBtn" aria-label="Night mode"></button>
+      <!-- Compartir este estudio (share.js) -->
+      <button class="tool-btn" id="shareBtn" data-share aria-label="Share this study" title="Share">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10H6v10h12V10h-2M12 3v11M8.5 6.5L12 3l3.5 3.5"/></svg>
+      </button>
       <button class="tool-btn listen" id="listenBtn" aria-label="Listen to this reading"></button>
     </div>
   </header>
@@ -56,6 +60,7 @@
        con ?id=... viene de Firestore; sin id, la lectura de prueba. -->
   <script src="assets/sample-reading.js"></script>
   <script src="assets/reader.js"></script>
+  <script src="assets/share.js"></script>
   <script type="module" src="assets/reading-loader.js"></script>
 </body>
 </html>

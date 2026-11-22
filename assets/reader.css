@@ -452,3 +452,22 @@ body.scroll-mode .page-btn {
   border-radius: 6px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
+
+/* Celulares: con el botón de compartir, la barra un poco más compacta para que quepa todo */
+@media (max-width: 400px) {
+  .tools {
+    gap: 4px;
+  }
+  .tool-btn {
+    min-width: 40px;
+    padding: 0 8px;
+  }
+}
+.tool-btn svg {
+  width: 20px;
+  height: 20px;
+}
+button.btn {
+  font: inherit;
+  cursor: pointer;
+}

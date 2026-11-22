@@ -30,11 +30,21 @@
   (no hay otro HTML: se esconde la portada y se muestra #sectionView).
   Todo lo de estudios se llena solo desde Firestore (assets/home.js).
 -->
-<body class="site">
+<body class="site at-home">
   <div class="sheet">
 
     <!-- Encabezado -->
+    <!--
+      En celular:
+        - Portada: el logo completo (libro + BIBLE TALKS), sin menú: abajo están las secciones.
+        - Al entrar a una sección: las letras se deslizan hacia el libro y desaparecen,
+          y aparece el menú (☰) a la izquierda del libro. (CSS: body.at-home, lo pone home.js)
+        - A la derecha: luna/sol y COMPARTIR (share.js).
+    -->
     <header class="site-head wrap">
+      <button class="round-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
       <a class="logo" href="#" aria-label="Bible Talks, home">
         <!-- Logo: libro abierto que también es un globo de diálogo (sin cruz) -->
         <svg viewBox="0 0 120 84" aria-hidden="true">
@@ -67,8 +77,9 @@
           <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
           <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
         </button>
-        <button class="round-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <!-- Compartir: el cuadrito con flecha hacia arriba (como en el iPhone) -->
+        <button class="round-btn" data-share aria-label="Share this page" title="Share">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10H6v10h12V10h-2M12 3v11M8.5 6.5L12 3l3.5 3.5"/></svg>
         </button>
       </div>
     </header>
@@ -227,6 +238,7 @@
   </div>
 
   <script src="assets/site.js"></script>
+  <script src="assets/share.js"></script>
   <script type="module" src="assets/home.js"></script>
   <script type="module" src="assets/contact.js"></script>
 </body>

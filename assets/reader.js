@@ -85,6 +85,7 @@ window.BibleReader = { start: function (reading) {
         '<p>Questions or thoughts? <a href="index.html#contact">' +
           (author === "Neil Whatmough" ? "Write to Neil" : "Write to us") + "</a></p>" +
         '<div class="end-actions">' +
+          '<button class="btn" type="button" data-share>Share this study</button>' +
           (reading.pdfUrl ? '<a class="btn" href="' + encodeURI(reading.pdfUrl) + '" download>Download PDF</a>' : "") +
           '<a class="btn ghost" href="index.html#' + reading.category + '">More ' + escapeHtml(category) + "</a>" +
         "</div>" +
@@ -99,6 +100,7 @@ window.BibleReader = { start: function (reading) {
     // (si no, Neil podía terminar navegando el sitio dentro del "celular").
     if (isPreview) {
       $("backLink").style.visibility = "hidden";
+      $("shareBtn").style.display = "none"; // compartir no tiene sentido en la vista previa
       var endActions = pagesEl.querySelector(".end-actions");
       if (endActions) endActions.remove();
       pagesEl.querySelectorAll(".end-card a").forEach(function (a) {

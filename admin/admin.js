@@ -10,6 +10,7 @@
      7. Guardar, publicar, quitar del sitio, papelera, historial
      8. Messages: lo que la gente manda desde Contact
      9. Site pages: la cinta de la portada (qué se ve, qué sigue, ajustes)
+    10. Images: galería de grabados de Doré (en vivo de Wikimedia) y otros sitios
    Los datos se guardan en Firestore, colección `readings`.
    ========================================================= */
 import { auth, db, ENV } from "../assets/firebase.js";
@@ -201,7 +202,7 @@ onAuthStateChanged(auth, async (u) => {
 // La dirección dice qué cuarto se ve:
 //   #home · #studies (= On the website) · #studies/<pestaña> (4 carpetas)
 //   #studies/<pestaña>/<sección o all> (dentro de una carpeta)
-//   #bin · #messages · #messages/archived · #site (Site pages)
+//   #bin · #messages · #messages/archived · #images · #site (Site pages)
 //   #study/<id> (un estudio) · #new (el que se acaba de subir, aún sin guardar)
 
 let currentHash = "";
@@ -231,6 +232,9 @@ async function route() {
   } else if (room === "bin") {
     showView("bin");
     paintBin();
+  } else if (room === "images") {
+    showView("images");
+    loadDore(); // la primera vez trae la galería de Wikimedia
   } else if (room === "site") {
     showView("site");
     await loadSiteConfig(); // lo que Neil haya guardado (versículos, estudio fijo, aviso)
@@ -1470,3 +1474,82 @@ $("saveSeasonBtn").addEventListener("click", () => {
   }
   saveSiteConfig({ season }, season.on ? "The seasonal message is on the banner." : "Seasonal message saved (turned off).");
 });
+
+/* ---------- 10. Images: galería de grabados de Doré ----------
+   Se pide EN VIVO a Wikimedia Commons (su API deja hacerlo desde el navegador
+   con origin=*). No se descarga ni se guarda nada: Neil ve la miniatura y
+   "Copy link" copia el enlace de la versión de 960 px, que es la que conviene
+   pegar en "Add a picture" (la original pesa varios MB). */
+
+const DORE_API = "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*" +
+  "&generator=categorymembers&gcmtitle=" + encodeURIComponent("Category:Doré's English Bible") +
+  "&gcmtype=file&gcmlimit=50&prop=imageinfo&iiprop=url&iiurlwidth=960";
+let dore = null;          // [{ num, title, big, small }] cuando ya cargó
+let doreLoading = false;
+
+// "File:109.Ezra Reads the Law to the People.jpg" → { num: 109, title: "Ezra Reads the Law to the People" }
+function doreName(fileTitle) {
+  const m = fileTitle.replace(/^File:/, "").replace(/\.(jpe?g|png|tiff?)$/i, "").match(/^(\d+)[.\s-]*(.*)$/);
+  return m ? { num: Number(m[1]), title: m[2] } : { num: 9999, title: fileTitle.replace(/^File:/, "") };
+}
+
+async function loadDore() {
+  if (dore || doreLoading) return;
+  doreLoading = true;
+  const list = [];
+  try {
+    let cont = "";
+    for (let i = 0; i < 10; i++) { // máximo 10 vueltas de 50 (sobra: son ~170)
+      const res = await fetch(DORE_API + cont);
+      const json = await res.json();
+      Object.values((json.query && json.query.pages) || {}).forEach((p) => {
+        const info = p.imageinfo && p.imageinfo[0];
+        if (!info || !info.thumburl) return;
+        const big = info.thumburl.split("?")[0];        // 960 px, sin los datos de rastreo
+        const small = big.replace("/960px-", "/330px-"); // miniatura para la galería
+        list.push(Object.assign({ big, small }, doreName(p.title)));
+      });
+      if (!json.continue) break;
+      cont = "&gcmcontinue=" + encodeURIComponent(json.continue.gcmcontinue) + "&continue=" + encodeURIComponent(json.continue.continue);
+    }
+    dore = list.sort((a, b) => a.num - b.num);
+  } catch (e) {
+    console.error("Wikimedia:", e);
+    $("doreStatus").textContent = "The engravings couldn’t load. Please check the internet connection, or use “Open the full collection”.";
+  }
+  doreLoading = false;
+  paintDore();
+}
+
+function paintDore() {
+  if (!dore) return;
+  const words = $("doreSearch").value.trim().toLowerCase();
+  const items = dore.filter((x) => !words || x.title.toLowerCase().includes(words));
+  $("doreStatus").textContent = words ? items.length + " of " + dore.length + " engravings"
+    : dore.length + " engravings, in the order of the Bible";
+  const grid = $("doreGrid");
+  grid.innerHTML = "";
+  items.forEach((x) => {
+    const card = document.createElement("figure");
+    card.className = "dore-card";
+    card.innerHTML = '<a target="_blank" rel="noopener" title="See it bigger"><img loading="lazy" alt=""></a>' +
+      '<figcaption></figcaption><button class="btn small" type="button">Copy link</button>';
+    card.querySelector("a").href = x.big;
+    card.querySelector("img").src = x.small;
+    card.querySelector("img").alt = x.title;
+    card.querySelector("figcaption").textContent = x.title;
+    const btn = card.querySelector("button");
+    btn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(x.big);
+        btn.textContent = "Copied ✓";
+        toast("Link copied. Paste it in “Add a picture” when you publish.");
+        setTimeout(() => { btn.textContent = "Copy link"; }, 2500);
+      } catch (e) {
+        prompt("Copy this link:", x.big); // si el navegador no deja copiar solo
+      }
+    });
+    grid.appendChild(card);
+  });
+}
+$("doreSearch").addEventListener("input", paintDore);

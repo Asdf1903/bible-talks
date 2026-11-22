@@ -1040,3 +1040,64 @@ a.slide:hover .slide-title {
   line-height: 0.9;
   color: var(--c);
 }
+
+/* ---------- Celular: logo completo en la portada; ☰ al entrar a una sección ----------
+   home.js pone body.at-home en la portada. Al salir de ella:
+   - "BIBLE TALKS" se desliza hacia el libro mientras se desvanece,
+   - y el menú (☰) aparece a la izquierda del libro.
+   Al volver a la portada pasa al revés. En computadora el menú va en la barra y no cambia. */
+@media (max-width: 1020px) {
+  .site-head {
+    gap: 10px;
+  }
+  .menu-btn {
+    width: 42px;
+    opacity: 1;
+    overflow: hidden;
+    transition: width 0.45s ease, opacity 0.35s ease 0.1s, margin 0.45s ease;
+  }
+  body.at-home .menu-btn {
+    width: 0;
+    opacity: 0;
+    margin-right: -10px; /* quita el espacio que sobra cuando no está */
+    border-width: 0;
+    pointer-events: none;
+  }
+  .logo-word {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(-60%);
+    transition: max-width 0.45s ease, opacity 0.3s ease, transform 0.45s ease;
+  }
+  body.at-home .logo-word {
+    max-width: 12em;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Aviso "Link copied" del botón de compartir */
+.share-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 80;
+  max-width: calc(100vw - 32px);
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-ui);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.share-toast.on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

@@ -66,7 +66,9 @@ window.BibleReader = { start: function (reading) {
     $("backLabel").textContent = category || "Back";
     $("backLink").href = "index.html#" + reading.category;
 
-    var spoken = reading.title + ". " + (reading.subtitle ? reading.subtitle.replace(/·/g, ",") + ". " : "");
+    // Lo que se dice en la portada (assets/spoken-text.js; la voz de Neil usa lo mismo)
+    var spoken = window.SpokenText ? SpokenText.titleText(reading)
+      : reading.title + ". " + (reading.subtitle ? reading.subtitle.replace(/·/g, ",") + ". " : "");
 
     pagesEl.innerHTML =
       '<header class="title-block" data-say="' + escapeHtml(spoken) + '">' +
@@ -92,8 +94,11 @@ window.BibleReader = { start: function (reading) {
         '<span id="endMark"></span>' +
       "</footer>";
 
-    // Cada párrafo es un "bloque" que se puede leer en voz alta
-    pagesEl.querySelectorAll(".body > p, .body > blockquote, .body > h2, .body > h3, .body > li")
+    // Cada párrafo es un "bloque" que se puede leer en voz alta.
+    // La lista sale de assets/spoken-text.js: así el audio de Neil y el texto
+    // cuentan los párrafos igual (incluye los renglones de las listas con guion).
+    pagesEl.querySelectorAll(window.SpokenText ? SpokenText.BLOCKS
+      : ".body > p, .body > blockquote, .body > h2, .body > h3, .body > ul > li, .body > ol > li")
       .forEach(function (el) { el.setAttribute("data-say", ""); });
 
     // Vista previa del panel: solo el estudio, sin salidas a otras páginas

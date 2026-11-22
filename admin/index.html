@@ -488,6 +488,21 @@
                 <input type="text" id="authorOther" class="author-other" placeholder="Write the name" autocomplete="off" hidden>
               </div>
             </div>
+
+            <!-- La voz de Neil (ElevenLabs). Por ahora es una PRUEBA: arma el audio y se
+                 escucha aquí, pero no se guarda (guardarlo necesita Firebase Storage = Blaze).
+                 La lógica está en admin/voice.js. -->
+            <div class="card voice-card" id="voiceCard">
+              <h2 class="voice-title">Neil’s voice <span class="chip draft">Test</span></h2>
+              <p class="small muted" id="voiceInfo">Checking…</p>
+              <button class="btn" id="voiceBtn" type="button" disabled>Hear it in Neil’s voice</button>
+              <div class="voice-progress" id="voiceProgress" hidden>
+                <div class="voice-bar"><span id="voiceBar"></span></div>
+                <p class="small" id="voiceProgressText"></p>
+              </div>
+              <audio id="voiceAudio" controls preload="auto" hidden></audio>
+              <p class="error small" id="voiceError" hidden></p>
+            </div>
           </div>
 
           <!-- Último paso: publicar (sigue el flujo: va después de los datos) -->
@@ -586,6 +601,8 @@
   <!-- Convertir Word a HTML -->
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js"></script>
   <script src="../assets/word-to-reading.js"></script>
+  <!-- Texto para hablar (citas bíblicas, griego, notas): lo usa la voz de Neil -->
+  <script src="../assets/spoken-text.js"></script>
   <!-- La lógica del panel -->
   <script type="module" src="admin.js"></script>
 </body>

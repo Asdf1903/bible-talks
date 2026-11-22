@@ -24,6 +24,7 @@ import {
 import { planSlides, upcomingChanges, upcomingVerses, verseList, safeLink } from "../assets/ribbon.js";
 import { VERSES } from "../assets/verses.js";
 import { sectionIcon } from "../assets/sections.js";
+import { WORD_LIMIT, plan as voicePlan, getCredits, makeAudio, voiceMessage } from "./voice.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -281,6 +282,7 @@ window.addEventListener("hashchange", () => {
   }
   if (!location.hash.startsWith("#study/") && location.hash !== "#new") {
     study = null; // al salir del editor se olvida el estudio abierto
+    resetVoice();
   }
   route();
 });
@@ -677,6 +679,7 @@ async function handleNewFile(file) {
     return;
   }
   study = newStudy();
+  resetVoice();
   Object.assign(study, {
     title: result.title, subtitle: result.subtitle, bodyHtml: result.bodyHtml,
     words: result.words, warnings: result.warnings, sourceName: file.name
@@ -771,6 +774,7 @@ BOOKS.forEach((b) => {
 });
 
 function loadStudy(id, r) {
+  if (!study || study.id !== id) resetVoice(); // el audio de prueba es de otro estudio
   study = { id, category: r.category, title: r.title, subtitle: r.subtitle || "", book: r.book || "",
             passage: r.passage || "", bodyHtml: r.bodyHtml, words: r.words || 0,
             sourceName: r.sourceName || "", status: r.status, date: tsToIso(r.publishAt),
@@ -802,7 +806,7 @@ function paintEditor() {
   $("dateInput").value = study.date;
   $("laterBox").open = study.date > todayIso(); // si ya tiene fecha futura, que se vea
   $("docName").textContent = study.sourceName || "Word document";
-  $("docWords").textContent = study.words ? study.words.toLocaleString("en-US") + " words" : "";
+  paintWords();
   $("docWarnings").hidden = !study.warnings.length;
   $("docWarnings").textContent = study.warnings.join(" ");
   $("replaceError").hidden = true;
@@ -810,6 +814,16 @@ function paintEditor() {
   editorProblem("");
   syncEditor();
   refreshPreview(true);
+  paintVoice(true);
+}
+
+// "850 words" · y si pasa del límite de la voz de Neil, se avisa (no impide publicar)
+function paintWords() {
+  const n = study.words || 0;
+  const over = n > WORD_LIMIT;
+  $("docWords").textContent = n ? n.toLocaleString("en-US") + " words" +
+    (over ? " · more than " + WORD_LIMIT.toLocaleString("en-US") + ", too long for Neil’s voice" : "") : "";
+  $("docWords").classList.toggle("over", over);
 }
 
 // Lee los campos y los guarda en `study`
@@ -869,6 +883,7 @@ function onEdit(e) {
   if (e && e.target && e.target.name === "category") $("sectionPick").classList.remove("need");
   syncEditor();
   refreshPreview();
+  paintVoice();
 }
 ["titleInput", "subtitleInput", "bookInput", "passageInput", "dateInput", "authorOther", "imageInput"].forEach((id) => {
   $(id).addEventListener("input", onEdit);
@@ -934,6 +949,103 @@ function refreshPreview(now) {
     else f.src = "../reading.html?preview=1";
   }, now ? 0 : 700);
 }
+
+/* ---------- La voz de Neil (prueba) ----------
+   Arma el audio del estudio con ElevenLabs y lo deja escuchar aquí mismo.
+   Todavía NO se guarda (falta Firebase Storage). Si el texto no ha cambiado,
+   se vuelve a escuchar sin gastar créditos. Ver admin/voice.js. */
+let voiceResult = null;   // el último audio armado: { fingerprint, url, blockTimes, ... }
+let voiceBusy = false;
+let voiceCredits = null;  // { left, limit, resetsAt } o { error }
+
+function readingForVoice() {
+  return { title: study.title || "Untitled study", subtitle: study.subtitle, bodyHtml: study.bodyHtml };
+}
+
+async function paintVoice(fetchCredits) {
+  if (!study || voiceBusy) return;
+  const info = $("voiceInfo"), btn = $("voiceBtn");
+  if (fetchCredits) {
+    try { voiceCredits = await getCredits(); }
+    catch (err) { voiceCredits = { error: err }; }
+    if (!study || voiceBusy) return;
+  }
+  const p = voicePlan(readingForVoice());
+  const ready = !!voiceResult && voiceResult.fingerprint === p.fingerprint;
+  $("voiceAudio").hidden = !ready;
+  btn.hidden = ready;
+
+  // Si la llave solo no puede VER los créditos, la voz sí funciona: se sigue sin saber cuántos quedan
+  if (voiceCredits && voiceCredits.error && voiceCredits.error.code === "key-permissions") voiceCredits = null;
+  if (voiceCredits && voiceCredits.error) {
+    info.textContent = voiceMessage(voiceCredits.error);
+    btn.disabled = true;
+    return;
+  }
+  if (p.words > WORD_LIMIT) {
+    info.textContent = "This study has " + p.words.toLocaleString("en-US") + " words. Neil’s voice reads studies of up to " +
+      WORD_LIMIT.toLocaleString("en-US") + " words. To hear it, make it shorter in Word and use “Use a corrected Word file”.";
+    btn.disabled = true;
+    return;
+  }
+  if (ready) {
+    info.textContent = "Ready: press play. Listening again doesn’t use credits.";
+    return;
+  }
+  const left = voiceCredits ? voiceCredits.left : null;
+  const enough = left == null || left >= p.cost;
+  const resets = voiceCredits && voiceCredits.resetsAt
+    ? " (more on " + new Date(voiceCredits.resetsAt).toLocaleDateString("en-US", { month: "long", day: "numeric" }) + ")" : "";
+  info.textContent = "Reads the study as it is now (about " + Math.max(1, Math.round(p.words / 150)) + " min). " +
+    "Uses about " + p.cost.toLocaleString("en-US") + " voice credits" +
+    (left != null ? "; " + left.toLocaleString("en-US") + " left this month" + resets : "") + "." +
+    (voiceResult ? " The text changed since the last time." : "") +
+    (enough ? "" : " Not enough credits for this study.");
+  btn.textContent = voiceResult ? "Make it again with the changes" : "Hear it in Neil’s voice";
+  btn.disabled = !enough;
+}
+
+$("voiceBtn").addEventListener("click", async () => {
+  if (voiceBusy || !study) return;
+  voiceBusy = true;
+  $("voiceBtn").disabled = true;
+  $("voiceError").hidden = true;
+  $("voiceProgress").hidden = false;
+  $("voiceBar").style.width = "4%";
+  $("voiceProgressText").textContent = "Recording in Neil’s voice… this takes about a minute.";
+  let problem = null;
+  try {
+    const result = await makeAudio(readingForVoice(), (done, total) => {
+      $("voiceBar").style.width = Math.round((done / total) * 100) + "%";
+      $("voiceProgressText").textContent = "Recording in Neil’s voice… part " + done + " of " + total;
+    });
+    if (voiceResult && voiceResult.url) URL.revokeObjectURL(voiceResult.url);
+    result.url = URL.createObjectURL(result.blob);
+    voiceResult = result;
+    $("voiceAudio").src = result.url;
+  } catch (err) {
+    problem = err;
+  }
+  voiceBusy = false;
+  $("voiceProgress").hidden = true;
+  await paintVoice(true); // se gastaron créditos: volver a preguntar cuántos quedan
+  if (problem) {
+    $("voiceError").textContent = voiceMessage(problem);
+    $("voiceError").hidden = false;
+  } else {
+    $("voiceAudio").play().catch(() => {});
+  }
+});
+
+// Al abrir otro estudio, el audio anterior ya no sirve
+function resetVoice() {
+  if (voiceResult && voiceResult.url) URL.revokeObjectURL(voiceResult.url);
+  voiceResult = null;
+  $("voiceAudio").pause();
+  $("voiceAudio").removeAttribute("src");
+  $("voiceError").hidden = true;
+}
+
 window.addEventListener("message", (e) => {
   if (e.origin !== location.origin || !e.data || e.data.type !== "bt-preview-ready" || !study) return;
   $("previewFrame").contentWindow.postMessage({

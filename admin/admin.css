@@ -868,6 +868,50 @@ textarea:focus {
 .editor-form .card + .card {
   margin-top: 16px;
 }
+/* Más palabras de las que lee la voz de Neil */
+#docWords.over {
+  color: var(--red);
+  font-weight: 600;
+}
+
+/* ---------- La voz de Neil (prueba) ---------- */
+.voice-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+.voice-card p {
+  margin: 0 0 12px;
+}
+.voice-card audio {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+.voice-card audio[hidden] {
+  display: none;
+}
+.voice-progress p {
+  margin: 8px 0 0;
+}
+.voice-bar {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--rule);
+  overflow: hidden;
+}
+.voice-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+.voice-card .error {
+  margin: 12px 0 0;
+}
 
 /* ---------- Pasos numerados ---------- */
 .steps {

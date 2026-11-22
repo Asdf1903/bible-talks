@@ -203,18 +203,31 @@ function paintUpcoming(items) {
 
 let allStudies = null; // null = todavía cargando
 
-function studyTile(item) {
+// Un estudio en la lista de su sección, como un renglón del índice de un libro:
+//   ROMANS 8:28-39                     (solo Bible Study / Prophecy, si tiene pasaje)
+//   NEW  Title of the study ·········· 5 min
+//   Subtítulo en cursiva (máx. 2 renglones)
+const NEW_DAYS = 14; // "New" mientras tenga menos de 2 semanas
+function studyRow(item) {
   const r = item.data;
-  const a = el("a", "study-tile");
+  const li = el("li");
+  const a = el("a", "study-row");
   a.href = readingLink(item.id);
-  // Franja de arriba: el color de la sección con su ícono (como el lomo de un libro)
-  const band = el("span", "study-band");
-  band.innerHTML = sectionIcon(r.category); // dibujo fijo nuestro, no datos de afuera
-  a.append(band, el("h2", null, r.title || ""));
-  if (r.subtitle) a.append(el("p", "study-sub", r.subtitle));
+
   const passage = [r.book, r.passage].filter(Boolean).join(" ");
-  a.append(el("p", "meta-line", (passage ? passage + " · " : "") + readTime(r)));
-  return a;
+  if (passage) a.append(el("span", "study-passage", passage));
+
+  const line = el("span", "study-line");
+  const title = el("span", "study-title");
+  const when = r.publishAt && r.publishAt.toDate ? r.publishAt.toDate() : null;
+  if (when && Date.now() - when.getTime() < NEW_DAYS * 864e5) title.append(el("span", "study-new", "New"));
+  title.append(document.createTextNode(r.title || ""));
+  line.append(title, el("span", "study-dots"), el("span", "study-time", readTime(r).replace(" read", "")));
+  a.append(line);
+
+  if (r.subtitle) a.append(el("span", "study-sub", r.subtitle));
+  li.append(a);
+  return li;
 }
 
 function paintSectionView(s) {
@@ -228,7 +241,7 @@ function paintSectionView(s) {
   grid.innerHTML = "";
   if (allStudies === null) { $("catCount").textContent = "Loading…"; $("catEmpty").hidden = true; return; }
   const items = allStudies.filter((x) => x.data.category === s.id);
-  items.forEach((x) => grid.appendChild(studyTile(x)));
+  items.forEach((x) => grid.appendChild(studyRow(x)));
   $("catCount").textContent = items.length === 1 ? "1 study" : items.length ? items.length + " studies" : "";
   $("catEmpty").hidden = items.length > 0;
 }

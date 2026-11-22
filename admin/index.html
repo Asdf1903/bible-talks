@@ -106,15 +106,16 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
         Bin <span class="nav-count" id="navBinCount"></span>
       </a>
+      <!-- Mensajes del formulario de Contact del sitio -->
+      <a class="nav-item" href="#messages" data-nav="messages">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3zM3 7l9 6 9-6"/></svg>
+        Messages <span class="nav-badge" id="navMsgCount" hidden></span>
+      </a>
 
-      <!-- Todavía no funcionan: se ven, pero no se pueden picar -->
+      <!-- Todavía no funciona: se ve, pero no se puede picar -->
       <span class="nav-item soon" aria-disabled="true" title="Coming soon">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM14 3v5h5"/></svg>
         Site pages <span class="soon-tag">Soon</span>
-      </span>
-      <span class="nav-item soon" aria-disabled="true" title="Coming soon">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3zM3 7l9 6 9-6"/></svg>
-        Messages <span class="soon-tag">Soon</span>
       </span>
 
       <div class="nav-bottom">
@@ -200,6 +201,19 @@
         <div class="file-list with-head" id="studiesList"></div>
         <p class="empty" id="studiesEmpty" hidden></p>
         <p class="drop-tip">Tip: you can drag a Word document anywhere on this page to start a new study.</p>
+      </section>
+
+      <!-- ===== Messages (lo que la gente manda desde Contact) ===== -->
+      <section class="view" id="view-messages" hidden>
+        <div class="view-head">
+          <h1>Messages</h1>
+        </div>
+        <div class="tabs" role="tablist">
+          <a class="tab" href="#messages" data-msgtab="inbox">Inbox <span id="msgCountInbox"></span></a>
+          <a class="tab" href="#messages/archived" data-msgtab="archived">Archived <span id="msgCountArchived"></span></a>
+        </div>
+        <div class="msg-list" id="msgList"></div>
+        <p class="empty" id="msgEmpty" hidden></p>
       </section>
 
       <!-- ===== Bin ===== -->

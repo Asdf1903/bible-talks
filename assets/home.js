@@ -4,7 +4,8 @@
    2. Las 4 secciones en mosaico (color + ícono + descripción)
    3. "Recent studies": los últimos publicados
    4. "Coming soon": lo que Neil ya programó (lista pública site/upcoming)
-   5. Cada sección (#good-news, etc.) y About (#about): en esta misma página, sin otro HTML
+   5. Cada sección (#good-news, etc.), About (#about) y Contact (#contact):
+      en esta misma página, sin otro HTML
 
    LA CINTA se arma sola, sin que Neil haga nada:
      1. Verse of the week: cambia cada lunes (assets/verses.js)
@@ -298,21 +299,26 @@ function paintSectionView(s) {
 //   (nada) o #     → portada
 //   #good-news…    → una sección
 //   #about         → About
+//   #contact       → Contact (el formulario lo maneja contact.js)
+const PAGES = {
+  about: { view: "aboutView", title: "About Neil Whatmough · Bible Talks" },
+  contact: { view: "contactView", title: "Contact · Bible Talks" }
+};
 function route() {
   const s = SECTIONS.find((x) => "#" + x.id === location.hash);
-  const about = location.hash === "#about";
-  $("homeView").hidden = !!s || about;
+  const page = PAGES[location.hash.slice(1)] || null;
+  $("homeView").hidden = !!(s || page);
   $("sectionView").hidden = !s;
-  $("aboutView").hidden = !about;
+  Object.values(PAGES).forEach((p) => { $(p.view).hidden = p !== page; });
   document.title = s ? s.name + " · Bible Talks"
-    : about ? "About Neil Whatmough · Bible Talks"
+    : page ? page.title
     : "Bible Talks · Studies by Neil Whatmough";
   if (s) paintSectionView(s);
   else document.body.classList.remove(...SECTIONS.map((x) => "sec-" + x.id));
-  if (s || about) stopTimer(); else restart(); // la cinta solo gira en la portada
+  if (s || page) stopTimer(); else restart(); // la cinta solo gira en la portada
 
   // Menú de arriba: marcar dónde estás y cerrarlo (en celular)
-  const current = s ? "#" + s.id : about ? "#about" : "#";
+  const current = s || page ? location.hash : "#";
   document.querySelectorAll(".site-nav a").forEach((a) => {
     if (a.getAttribute("href") === current) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");

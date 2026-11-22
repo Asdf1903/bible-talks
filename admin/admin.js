@@ -8,6 +8,7 @@
      5. Nuevo estudio, paso 1: subir el Word (ventana o arrastrando)
      6. Editor, paso 2: datos a la izquierda + vista previa en vivo a la derecha
      7. Guardar, publicar, quitar del sitio, papelera, historial
+     8. Messages: lo que la gente manda desde Contact
    Los datos se guardan en Firestore, colección `readings`.
    ========================================================= */
 import { auth, db, ENV } from "../assets/firebase.js";
@@ -189,13 +190,15 @@ onAuthStateChanged(auth, async (u) => {
   $("app").hidden = false;
   await refreshStudies();
   route();
+  refreshMessages(); // para el numerito de mensajes nuevos en el menú
 });
 
 /* ---------- 3. Navegación ---------- */
 // La dirección dice qué cuarto se ve:
 //   #home · #studies (= On the website) · #studies/<pestaña> (4 carpetas)
 //   #studies/<pestaña>/<sección o all> (dentro de una carpeta)
-//   #bin · #study/<id> (un estudio) · #new (el que se acaba de subir, aún sin guardar)
+//   #bin · #messages · #messages/archived
+//   #study/<id> (un estudio) · #new (el que se acaba de subir, aún sin guardar)
 
 let currentHash = "";
 let ignoreHash = false;
@@ -224,6 +227,12 @@ async function route() {
   } else if (room === "bin") {
     showView("bin");
     paintBin();
+  } else if (room === "messages") {
+    msgTab = arg === "archived" ? "archived" : "inbox";
+    showView("messages");
+    paintMessages();
+    await refreshMessages(); // trae los más nuevos
+    paintMessages();
   } else if (room === "study" && arg) {
     const id = decodeURIComponent(arg);
     if (!study || study.id !== id) {
@@ -1086,4 +1095,121 @@ async function keepOldVersion(id, next) {
     category: old.category || "", sourceName: old.sourceName || "", status: old.status || "",
     savedAt: serverTimestamp(), savedBy: user.uid
   });
+}
+
+/* ---------- 8. Messages: lo que la gente manda desde Contact ----------
+   Vienen de la colección `messages` ({ name, email, type, message, status, createdAt }).
+   status: "new" (sin leer) → "read" (al abrirlo) → "archived" (si Neil lo archiva).
+   Responder = abre el correo de Neil con la dirección de esa persona ya puesta. */
+
+const MSG_TYPES = { question: "Question", suggestion: "Suggestion", observation: "Observation",
+  request: "Request", thanks: "Thank you" };
+let messages = [];       // [{ id, data }]
+let msgTab = "inbox";    // "inbox" (nuevos y leídos) o "archived"
+let openMsgId = null;    // el que está abierto
+
+function paintMsgBadge() {
+  const unread = messages.filter((m) => m.data.status === "new").length;
+  $("navMsgCount").textContent = unread;
+  $("navMsgCount").hidden = !unread;
+}
+
+async function refreshMessages() {
+  try {
+    const snap = await getDocs(query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(300)));
+    messages = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+  } catch (e) {
+    console.error("messages:", e); // casi siempre: faltan las reglas nuevas en Firestore
+  }
+  paintMsgBadge();
+}
+
+function msgWhen(ts) {
+  const d = ts && ts.toDate ? ts.toDate() : new Date();
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + ", " +
+    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+async function setMsgStatus(m, status) {
+  try {
+    await updateDoc(doc(db, "messages", m.id), { status });
+    m.data.status = status;
+  } catch (e) {
+    console.error(e);
+    toast("It couldn’t be changed. Please try again.");
+  }
+  paintMsgBadge();
+  paintMessages();
+}
+
+function paintMessages() {
+  document.querySelectorAll("[data-msgtab]").forEach((t) => t.classList.toggle("on", t.dataset.msgtab === msgTab));
+  const inbox = messages.filter((m) => m.data.status !== "archived");
+  const archived = messages.filter((m) => m.data.status === "archived");
+  $("msgCountInbox").textContent = inbox.length ? "(" + inbox.length + ")" : "";
+  $("msgCountArchived").textContent = archived.length ? "(" + archived.length + ")" : "";
+
+  const items = msgTab === "archived" ? archived : inbox;
+  const list = $("msgList");
+  list.innerHTML = "";
+  items.forEach((m) => {
+    const r = m.data;
+    const open = m.id === openMsgId;
+    const box = document.createElement("article");
+    box.className = "msg" + (r.status === "new" ? " unread" : "") + (open ? " open" : "");
+
+    // Renglón: • Nombre · [Tipo] · primeras palabras · fecha
+    const head = document.createElement("button");
+    head.className = "msg-head";
+    head.setAttribute("aria-expanded", String(open));
+    head.innerHTML = '<span class="msg-dot" aria-hidden="true"></span><strong class="msg-name"></strong>' +
+      '<span class="msg-type"></span><span class="msg-preview"></span><span class="msg-date"></span>';
+    head.querySelector(".msg-name").textContent = r.name || "(no name)";
+    head.querySelector(".msg-type").textContent = MSG_TYPES[r.type] || "Message";
+    head.querySelector(".msg-preview").textContent = (r.message || "").slice(0, 120);
+    head.querySelector(".msg-date").textContent = msgWhen(r.createdAt);
+    head.addEventListener("click", () => {
+      openMsgId = open ? null : m.id;
+      if (!open && r.status === "new") setMsgStatus(m, "read"); // al abrirlo, queda leído
+      else paintMessages();
+    });
+    box.appendChild(head);
+
+    // Abierto: el mensaje completo + botones
+    if (open) {
+      const body = document.createElement("div");
+      body.className = "msg-body";
+      body.innerHTML = '<p class="msg-from"></p><p class="msg-text"></p><div class="msg-actions"></div>';
+      body.querySelector(".msg-from").textContent = (r.name || "") + " · " + (r.email || "");
+      body.querySelector(".msg-text").textContent = r.message || "";
+      const acts = body.querySelector(".msg-actions");
+
+      const reply = document.createElement("a");
+      reply.className = "btn primary small";
+      reply.textContent = "Reply by email";
+      reply.href = "mailto:" + encodeURIComponent(r.email || "") +
+        "?subject=" + encodeURIComponent("Re: your message on Bible Talks");
+      acts.appendChild(reply);
+
+      const btn = (label, fn) => {
+        const b = document.createElement("button");
+        b.className = "btn small";
+        b.textContent = label;
+        b.addEventListener("click", fn);
+        acts.appendChild(b);
+      };
+      if (r.status === "archived") {
+        btn("Move back to the inbox", () => { openMsgId = null; setMsgStatus(m, "read"); });
+      } else {
+        btn("Mark as unread", () => { openMsgId = null; setMsgStatus(m, "new"); });
+        btn("Archive", () => { openMsgId = null; setMsgStatus(m, "archived"); toast("Archived. It is in the Archived tab."); });
+      }
+      box.appendChild(body);
+    }
+    list.appendChild(box);
+  });
+
+  $("msgEmpty").hidden = items.length > 0;
+  $("msgEmpty").textContent = msgTab === "archived" ? "Nothing archived."
+    : "No messages yet. When someone writes from the Contact page of the website, it appears here.";
 }

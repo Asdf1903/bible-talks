@@ -70,6 +70,28 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Mensajes del formulario de Contact (index.html#contact)
+    // - Cualquiera puede MANDAR uno, solo si viene bien formado (campos exactos y tamaños).
+    // - Solo Neil e Isra los LEEN y les cambian el estado (leído / archivado) desde el panel.
+    // - Nadie los borra desde el sitio.
+    match /messages/{messageId} {
+      allow create: if request.resource.data.keys().hasOnly(["name", "email", "type", "message", "status", "createdAt"]) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 100 &&
+        request.resource.data.email is string && request.resource.data.email.size() <= 200 &&
+        request.resource.data.email.matches("^[^@\\s]+@[^@\\s]+[.][^@\\s]+$") &&
+        request.resource.data.type in ["question", "suggestion", "observation", "request", "thanks"] &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 5000 &&
+        request.resource.data.status == "new" &&
+        request.resource.data.createdAt == request.time;
+      allow read: if isAdmin();
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status"]) &&
+        request.resource.data.status in ["new", "read", "archived"];
+      allow delete: if false;
+    }
+
     // Todo lo demás: cerrado
     match /{document=**} {
       allow read, write: if false;

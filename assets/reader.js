@@ -79,7 +79,7 @@ window.BibleReader = { start: function (reading) {
       '<footer class="end-card">' +
         '<div class="fleuron" aria-hidden="true">✦</div>' +
         (author ? '<p class="sign">' + escapeHtml(author) + "</p>" : "") +
-        '<p>Questions or thoughts? <a href="mailto:neil@whatmough.ca">' +
+        '<p>Questions or thoughts? <a href="index.html#contact">' +
           (author === "Neil Whatmough" ? "Write to Neil" : "Write to us") + "</a></p>" +
         '<div class="end-actions">' +
           (reading.pdfUrl ? '<a class="btn" href="' + encodeURI(reading.pdfUrl) + '" download>Download PDF</a>' : "") +

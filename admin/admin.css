@@ -1400,3 +1400,116 @@ textarea {
   height: auto;
   margin: 0 auto 10px;
 }
+
+/* ---------- Messages ---------- */
+.nav-badge {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+.msg-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+.msg {
+  border-bottom: 1px solid var(--rule);
+}
+.msg-head {
+  display: grid;
+  grid-template-columns: 10px minmax(6rem, 12rem) auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 12px;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.msg-head:hover {
+  background: var(--hover);
+}
+.msg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.msg.unread .msg-dot {
+  background: var(--gold);
+}
+.msg-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  font-weight: 500;
+}
+.msg.unread .msg-name,
+.msg.unread .msg-preview {
+  font-weight: 700;
+  color: var(--ink);
+}
+.msg-type {
+  padding: 1px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.msg-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-date {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.msg.open {
+  background: var(--paper);
+}
+.msg-body {
+  padding: 4px 16px 18px 34px;
+}
+.msg-from {
+  margin: 0 0 10px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.msg-text {
+  margin: 0 0 16px;
+  white-space: pre-wrap; /* respeta los renglones que escribió la persona */
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.msg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* Hoja angosta: nombre y fecha arriba, el resto abajo */
+@container main (max-width: 640px) {
+  .msg-head {
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    grid-template-areas: "dot name date" ". type type" ". preview preview";
+    row-gap: 2px;
+    padding: 10px 8px;
+  }
+  .msg-dot { grid-area: dot; }
+  .msg-name { grid-area: name; }
+  .msg-date { grid-area: date; }
+  .msg-type { grid-area: type; justify-self: start; }
+  .msg-preview { grid-area: preview; }
+  .msg-body { padding-left: 26px; }
+}

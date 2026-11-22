@@ -283,6 +283,24 @@ async function getSiteDoc(name) {
   }
 }
 
+// Direcciones limpias y del WordPress viejo → la vista con #
+//   /prophecy, /about…  (a donde mandan las redirecciones de vercel.json) → /#prophecy
+//   /?page_id=20        (dirección vieja, por si llega sin pasar por Vercel) → /#prophecy
+//   /?p=1, /?attachment_id=…  (basura vieja) → / (portada)
+// Así en la barra siempre queda la dirección normal del sitio.
+const OLD_PAGES = { 20: "prophecy", 40: "bible-study", 106: "bible-study", 59: "good-news", 113: "contact" };
+(function tidyAddress() {
+  const room = location.pathname.replace(/^\/+|\/+$/g, "");
+  const known = SECTIONS.some((x) => x.id === room) || !!PAGES[room];
+  const q = new URLSearchParams(location.search);
+  if (known) {
+    history.replaceState(null, "", "/#" + room);
+  } else if (q.has("page_id") || q.has("p") || q.has("attachment_id")) {
+    const old = OLD_PAGES[q.get("page_id")];
+    history.replaceState(null, "", location.pathname + (old ? "#" + old : location.hash));
+  }
+})();
+
 // Mientras carga: el versículo y las secciones ya se ven
 startRibbon(buildSlides(null, []), []);
 paintSections([]);

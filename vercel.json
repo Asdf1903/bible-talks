@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/", "has": [{ "type": "query", "key": "page_id", "value": "20" }],  "destination": "/prophecy",    "permanent": true },
+    { "source": "/", "has": [{ "type": "query", "key": "page_id", "value": "40" }],  "destination": "/bible-study", "permanent": true },
+    { "source": "/", "has": [{ "type": "query", "key": "page_id", "value": "106" }], "destination": "/bible-study", "permanent": true },
+    { "source": "/", "has": [{ "type": "query", "key": "page_id", "value": "59" }],  "destination": "/good-news",   "permanent": true },
+    { "source": "/", "has": [{ "type": "query", "key": "page_id", "value": "113" }], "destination": "/contact",     "permanent": true },
+    { "source": "/feed", "destination": "/", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/:room(good-news|doctrine|bible-study|prophecy|about|contact)", "destination": "/index.html" }
+  ]
+}

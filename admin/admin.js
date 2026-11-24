@@ -24,7 +24,7 @@ import {
 import { planSlides, upcomingChanges, upcomingVerses, verseList, safeLink } from "../assets/ribbon.js";
 import { VERSES } from "../assets/verses.js";
 import { sectionIcon } from "../assets/sections.js";
-import { WORD_LIMIT, plan as voicePlan, getCredits, makeAudio, voiceMessage } from "./voice.js";
+import { plan as voicePlan, getCredits, makeAudio, voiceMessage } from "./voice.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -817,13 +817,10 @@ function paintEditor() {
   paintVoice(true);
 }
 
-// "850 words" · y si pasa del límite de la voz de Neil, se avisa (no impide publicar)
+// "850 words" (sin límite: Neil escribe tan largo como quiera)
 function paintWords() {
   const n = study.words || 0;
-  const over = n > WORD_LIMIT;
-  $("docWords").textContent = n ? n.toLocaleString("en-US") + " words" +
-    (over ? " · more than " + WORD_LIMIT.toLocaleString("en-US") + ", too long for Neil’s voice" : "") : "";
-  $("docWords").classList.toggle("over", over);
+  $("docWords").textContent = n ? n.toLocaleString("en-US") + " words" : "";
 }
 
 // Lee los campos y los guarda en `study`
@@ -979,12 +976,6 @@ async function paintVoice(fetchCredits) {
   if (voiceCredits && voiceCredits.error && voiceCredits.error.code === "key-permissions") voiceCredits = null;
   if (voiceCredits && voiceCredits.error) {
     info.textContent = voiceMessage(voiceCredits.error);
-    btn.disabled = true;
-    return;
-  }
-  if (p.words > WORD_LIMIT) {
-    info.textContent = "This study has " + p.words.toLocaleString("en-US") + " words. Neil’s voice reads studies of up to " +
-      WORD_LIMIT.toLocaleString("en-US") + " words. To hear it, make it shorter in Word and use “Use a corrected Word file”.";
     btn.disabled = true;
     return;
   }

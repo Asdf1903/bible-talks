@@ -18,7 +18,6 @@
    ========================================================= */
 import { auth } from "../assets/firebase.js";
 
-export const WORD_LIMIT = 1200; // límite por estudio (acordado con Neil, "por seguridad")
 const CHUNK_CHARS = 2000;
 
 // Mensajes para cada código de error de la ventanilla

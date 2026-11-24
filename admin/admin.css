@@ -868,11 +868,6 @@ textarea:focus {
 .editor-form .card + .card {
   margin-top: 16px;
 }
-/* Más palabras de las que lee la voz de Neil */
-#docWords.over {
-  color: var(--red);
-  font-weight: 600;
-}
 
 /* ---------- La voz de Neil (prueba) ---------- */
 .voice-title {
